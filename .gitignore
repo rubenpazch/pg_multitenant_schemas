@@ -1,0 +1,29 @@
+/.bundle/
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
+*.gem
+
+# rspec failure tracking
+.rspec_status
+
+# macOS
+.DS_Store
+.DS_Store?
+
+# Temporary files
+*~
+*.tmp
+*.log
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-*
+
+# Bundler
+Gemfile.lock.backup
