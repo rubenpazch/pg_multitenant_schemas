@@ -6,13 +6,13 @@ Gem::Specification.new do |spec|
   spec.name = "pg_multitenant_schemas"
   spec.version = PgMultitenantSchemas::VERSION
   spec.authors = ["Ruben Paz"]
-  spec.email = ["ruben@example.com"]
+  spec.email = ["rubenpazchuspe@outlook.com"]
 
   spec.summary = "PostgreSQL schema-based multitenancy for Rails applications"
   spec.description = "A Ruby gem that provides PostgreSQL schema-based multitenancy with automatic tenant " \
                      "resolution, schema switching, Rails 8 compatibility, and comprehensive Rails integration. " \
                      "Perfect for SaaS applications requiring secure tenant isolation."
-  spec.homepage = "https://github.com/rubenpaz/pg_multitenant_schemas"
+  spec.homepage = "https://github.com/rubenpazch/pg_multitenant_schemas"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.1.0"
 
