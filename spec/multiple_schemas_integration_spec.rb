@@ -52,7 +52,7 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
       # Switch between them and verify
       tenants.each do |tenant|
         PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
-        current = PgMultitenantSchemas::SchemaSwitcher.current_schema()
+        current = PgMultitenantSchemas::SchemaSwitcher.current_schema
         expect(current).to eq(tenant)
       end
     end

@@ -67,7 +67,7 @@ module PgMultitenantSchemas
             WHERE schema_name = '#{schema_name}'
           ) AS schema_exists
         SQL
-        
+
         value = get_result_value(result, 0, 0)
         # Handle both boolean values and string representations
         case value

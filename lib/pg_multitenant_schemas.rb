@@ -1,5 +1,7 @@
+# frozen_string_literal: true
+
 # frozen_string_li# PgMultitenantSchemas provides modern PostgreSQL schema-based multitenancy functionality.
-# Built for Rails 8+ and Ruby 3.4+, it allows switching between different PostgreSQL schemas 
+# Built for Rails 8+ and Ruby 3.4+, it allows switching between different PostgreSQL schemas
 # to achieve secure tenant isolation while maintaining high performance and developer experience.al: true
 
 require "active_support/core_ext/module/delegation"
@@ -7,9 +9,10 @@ require "active_support/core_ext/object/blank"
 require_relative "pg_multitenant_schemas/version"
 require_relative "pg_multitenant_schemas/errors"
 require_relative "pg_multitenant_schemas/configuration"
-require_relative "pg_multitenant_schemas/schema_switcher"
 require_relative "pg_multitenant_schemas/context"
+require_relative "pg_multitenant_schemas/schema_switcher"
 require_relative "pg_multitenant_schemas/tenant_resolver"
+require_relative "pg_multitenant_schemas/migrator"
 
 # Rails integration (Rails 8+ required)
 if defined?(Rails)

@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 🚀 **Migration System Overhaul** 
+- **NEW: Automated Migration Management**: Complete migration system for multi-tenant schemas
+- **NEW: PgMultitenantSchemas::Migrator**: Comprehensive migration management class
+- **NEW: Simplified Rake Tasks**: Modern `tenants:*` namespace with intuitive commands
+- **NEW: Bulk Operations**: Single-command migration across all tenant schemas
+- **NEW: Enhanced Status Reporting**: Detailed migration status with progress indicators
+
+### ✨ **Enhanced Features**
+- **Automated Tenant Setup**: `setup_tenant()` creates schema + runs migrations
+- **Migration Status Tracking**: Real-time status across all tenant schemas  
+- **Error Resilience**: Graceful error handling per tenant during bulk operations
+- **Tenant Creation Workflow**: `create_tenant_with_schema()` for complete tenant setup
+- **Rollback Support**: Individual tenant rollback capabilities
+
+### 🔧 **Developer Experience**
+- **Intuitive Commands**: `rails tenants:migrate`, `rails tenants:status`, `rails tenants:create`
+- **Progress Feedback**: Visual progress indicators during migration operations
+- **Safety Features**: Confirmation prompts for destructive operations
+- **Legacy Compatibility**: Deprecated old commands with migration path
+- **Example Scripts**: Complete workflow documentation and examples
+
 ## [0.2.0] - 2025-09-06
 
 ### 🚀 **BREAKING CHANGES**
