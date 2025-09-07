@@ -75,7 +75,7 @@ module PgMultitenantSchemas
 
         begin
           switch_to_schema(schema_name)
-          ActiveRecord::Migrator.rollback(migration_paths, steps)
+          ActiveRecord::Base.connection.migration_context.rollback(migration_paths, steps)
           puts "  ✅ Rollback completed" if verbose
         rescue StandardError => e
           puts "  ❌ Rollback failed: #{e.message}" if verbose

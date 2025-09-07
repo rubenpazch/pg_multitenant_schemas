@@ -34,7 +34,7 @@ module PgMultitenantSchemas
     end
 
     def run_migrations
-      ActiveRecord::Tasks::DatabaseTasks.migrate
+      ActiveRecord::Base.connection.migrate
     end
 
     def pending_migrations
@@ -48,7 +48,7 @@ module PgMultitenantSchemas
     end
 
     def migration_paths
-      ActiveRecord::Tasks::DatabaseTasks.migrations_paths
+      ActiveRecord::Base.connection.migration_context.migrations_paths
     end
   end
 end
