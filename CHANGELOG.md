@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2025-09-06
+
+### 🚀 **BREAKING CHANGES**
+- **Modernized for Rails 8+ and Ruby 3.4+**: Removed backward compatibility
+- **Simplified API**: Removed dual API support for cleaner codebase
+- **Rails 8+ Only**: Updated dependencies to require ActiveRecord >= 8.0
+- **Ruby 3.2+ Required**: Minimum Ruby version increased from 3.1.0 to 3.2.0
+
+### ✨ **Added**
+- Modern Ruby 3.3+ features and performance optimizations
+- Enhanced configuration defaults for Rails 8+ applications
+- Improved error messages and developer experience
+
+### 🔧 **Changed**
+- Simplified `SchemaSwitcher` API (removed connection parameter overloads)
+- Updated default connection class to `ApplicationRecord`
+- Enhanced excluded subdomains and TLD lists
+- Automatic Rails logger integration
+
+### 🗑️ **Removed**
+- Backward compatibility layers
+- Dual API support (old conn parameter methods)
+- Legacy Rails version compatibility code
+- Ruby < 3.3 support
+
 ## [0.1.3] - 2025-09-03
 
 ### Added

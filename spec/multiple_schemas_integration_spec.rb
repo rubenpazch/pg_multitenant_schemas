@@ -20,6 +20,11 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
     skip "PostgreSQL not available: #{e.message}"
   end
 
+  before do
+    # Configure the gem to use our test connection
+    allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(conn)
+  end
+
   after do
     # Clean up all test schemas
     if defined?(conn) && conn
@@ -35,30 +40,30 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
 
     it "creates multiple schemas successfully" do
       tenants.each do |tenant|
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, tenant)
-        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, tenant)).to be true
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(tenant)
+        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(tenant)).to be true
       end
     end
 
     it "switches between multiple schemas" do
       # Create all schemas
-      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, t) }
+      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(t) }
 
       # Switch between them and verify
       tenants.each do |tenant|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, tenant)
-        current = PgMultitenantSchemas::SchemaSwitcher.current_schema(conn)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
+        current = PgMultitenantSchemas::SchemaSwitcher.current_schema()
         expect(current).to eq(tenant)
       end
     end
 
     it "maintains data isolation between schemas" do
       # Create schemas
-      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, t) }
+      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(t) }
 
       # Create tables with different data in each schema
       tenants.each_with_index do |tenant, _index|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, tenant)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
 
         # Create table
         conn.exec("CREATE TABLE users (id SERIAL PRIMARY KEY, name VARCHAR(50));")
@@ -73,7 +78,7 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
 
       # Verify isolation - each schema should only see its own data
       tenants.each do |tenant|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, tenant)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
         result = conn.exec("SELECT COUNT(*) FROM users;")
         expect(result.getvalue(0, 0)).to eq("1") # Only one user per schema
 
@@ -84,7 +89,7 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
 
     it "handles concurrent schema access safely" do
       # Create schemas
-      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, t) }
+      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(t) }
 
       # Simulate concurrent access with multiple connections
       connections = tenants.map { |_| PG.connect(db_config) }
@@ -93,7 +98,7 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
         # Each connection works in different schema
         connections.each_with_index do |connection, index|
           tenant = tenants[index]
-          PgMultitenantSchemas::SchemaSwitcher.switch_schema(connection, tenant)
+          PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
 
           # Create table and insert data
           connection.exec("CREATE TABLE orders (id SERIAL PRIMARY KEY, tenant_name VARCHAR(50));")
@@ -111,19 +116,19 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
 
     it "drops multiple schemas cleanly" do
       # Create all schemas
-      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, t) }
+      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.create_schema(t) }
 
       # Verify they exist
       tenants.each do |tenant|
-        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, tenant)).to be true
+        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(tenant)).to be true
       end
 
       # Drop all schemas
-      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, t) }
+      tenants.each { |t| PgMultitenantSchemas::SchemaSwitcher.drop_schema(t) }
 
       # Verify they're gone
       tenants.each do |tenant|
-        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, tenant)).to be false
+        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(tenant)).to be false
       end
     end
   end
@@ -132,19 +137,19 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
     it "handles complex search paths" do
       # Create multiple schemas
       %w[tenant_a tenant_b public].each do |schema|
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema) unless schema == "public"
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(schema) unless schema == "public"
       end
 
       # Set complex search path
       conn.exec('SET search_path TO "tenant_a", "tenant_b", public;')
 
       # Create table in tenant_a
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "tenant_a")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("tenant_a")
       conn.exec("CREATE TABLE shared_table (id SERIAL PRIMARY KEY, source VARCHAR(20));")
       conn.exec("INSERT INTO shared_table (source) VALUES ('tenant_a');")
 
       # Create table in tenant_b
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "tenant_b")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("tenant_b")
       conn.exec("CREATE TABLE shared_table (id SERIAL PRIMARY KEY, source VARCHAR(20));")
       conn.exec("INSERT INTO shared_table (source) VALUES ('tenant_b');")
 
@@ -160,8 +165,8 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
       schema_name = "migration_test"
 
       # Create schema and add objects
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema_name)
 
       # Add tables, indexes, functions
       conn.exec(<<~SQL)
@@ -186,15 +191,15 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
       expect(result.getvalue(0, 0)).to eq("2")
 
       # Drop schema with CASCADE should remove everything
-      PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, schema_name, cascade: true)
-      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, schema_name)).to be false
+      PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name, cascade: true)
+      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema_name)).to be false
     end
   end
 
   describe "error scenarios with multiple schemas" do
     it "handles dropping non-existent schemas gracefully" do
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, "nonexistent_schema")
+        PgMultitenantSchemas::SchemaSwitcher.drop_schema("nonexistent_schema")
       end.not_to raise_error
     end
 
@@ -202,22 +207,22 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
       schema_name = "dependency_test"
 
       # Create schema with objects
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema_name)
       conn.exec("DROP TABLE IF EXISTS test_table;")
       conn.exec("CREATE TABLE test_table (id SERIAL);")
 
       # Switch back to public
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "public")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("public")
 
       # DROP RESTRICT should fail when schema has dependencies
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, schema_name, cascade: false)
+        PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name, cascade: false)
       end.to raise_error(PG::DependentObjectsStillExist)
 
       # DROP CASCADE should succeed
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, schema_name, cascade: true)
+        PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name, cascade: true)
       end.not_to raise_error
     end
   end

@@ -54,48 +54,50 @@ end
 # Mock Tenant model for testing
 class Tenant < ApplicationRecord
   include PgMultitenantSchemas::Rails::ModelConcern
-  
+
   attr_accessor :id, :subdomain, :status, :domain_base
-  
+
   def initialize(attrs = {})
     attrs.each { |k, v| send("#{k}=", v) if respond_to?("#{k}=") }
     @id = attrs[:id] || 1
-    @subdomain = attrs[:subdomain] || 'test'
-    @status = attrs[:status] || 'active'
-    @domain_base = attrs[:domain_base] || 'localhost:3000'
+    @subdomain = attrs[:subdomain] || "test"
+    @status = attrs[:status] || "active"
+    @domain_base = attrs[:domain_base] || "localhost:3000"
   end
-  
+
   def active?
-    status == 'active'
+    status == "active"
   end
-  
+
   def trial?
-    status == 'trial'
+    status == "trial"
   end
-  
+
   def inactive?
-    status == 'inactive'
+    status == "inactive"
   end
-  
+
   def suspended?
-    status == 'suspended'
+    status == "suspended"
   end
-  
+
   def full_domain(base = nil)
-    base_domain = base || domain_base || 'localhost:3000'
+    base_domain = base || domain_base || "localhost:3000"
     "#{subdomain}.#{base_domain}"
   end
-  
+
   def normalize_subdomain
     return if subdomain.nil?
+
     normalized = subdomain.downcase.strip
     self.subdomain = normalized
     normalized
   end
-  
+
   def self.find_by(conditions)
     # Mock implementation
-    return nil unless conditions[:subdomain] && conditions[:status] == 'active'
+    return nil unless conditions[:subdomain] && conditions[:status] == "active"
+
     new(conditions)
   end
 end

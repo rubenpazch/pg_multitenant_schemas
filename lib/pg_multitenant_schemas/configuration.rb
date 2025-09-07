@@ -13,11 +13,11 @@ module PgMultitenantSchemas
       @tenant_model_class = "Tenant"
       @default_schema = "public"
       @development_fallback = false
-      @excluded_subdomains = %w[www api admin mail ftp blog support help docs]
-      @common_tlds = %w[com org net edu gov mil int co uk ca au de fr jp cn]
+      @excluded_subdomains = %w[www api admin mail ftp blog support help docs staging]
+      @common_tlds = %w[com org net edu gov mil int co uk ca au de fr jp cn dev test]
       @auto_create_schemas = true
-      @connection_class = "ActiveRecord::Base"
-      @logger = nil
+      @connection_class = "ApplicationRecord"
+      @logger = defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : nil
     end
 
     def tenant_model

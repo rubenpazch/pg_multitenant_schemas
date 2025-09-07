@@ -7,7 +7,7 @@ RSpec.describe PgMultitenantSchemas::Configuration do
 
   describe "#initialize" do
     it "sets default values" do
-      expect(config.connection_class).to eq("ActiveRecord::Base")
+      expect(config.connection_class).to eq("ApplicationRecord")
       expect(config.development_fallback).to be false
       expect(config.auto_create_schemas).to be true
       expect(config.logger).to be_nil

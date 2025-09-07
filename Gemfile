@@ -9,7 +9,7 @@ gem "irb"
 gem "rake", "~> 13.0"
 
 gem "rspec", "~> 3.0"
-gem "rspec-rails", "~> 7.0"  # Latest for Rails 8
+gem "rspec-rails", "~> 7.0" # Latest for Rails 8
 
 gem "activerecord", ">= 7.0", "< 9.0"
 gem "activesupport", ">= 7.0", "< 9.0"

@@ -5,21 +5,25 @@ require "spec_helper"
 RSpec.describe "Integration Tests" do
   let(:mock_conn) { double("PG::Connection") }
 
+  before do
+    allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(mock_conn)
+  end
+
   describe "schema operations workflow" do
     it "performs a complete schema lifecycle" do
       schema_name = "test_tenant"
 
       # Create schema
-      expect(mock_conn).to receive(:exec).with('CREATE SCHEMA IF NOT EXISTS "test_tenant";')
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(mock_conn, schema_name)
+      expect(mock_conn).to receive(:execute).with('CREATE SCHEMA IF NOT EXISTS "test_tenant";')
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
 
       # Switch to schema
-      expect(mock_conn).to receive(:exec).with('SET search_path TO "test_tenant";')
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, schema_name)
+      expect(mock_conn).to receive(:execute).with('SET search_path TO "test_tenant";')
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema_name)
 
       # Drop schema
-      expect(mock_conn).to receive(:exec).with('DROP SCHEMA IF EXISTS "test_tenant" CASCADE;')
-      PgMultitenantSchemas::SchemaSwitcher.drop_schema(mock_conn, schema_name)
+      expect(mock_conn).to receive(:execute).with('DROP SCHEMA IF EXISTS "test_tenant" CASCADE;')
+      PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name)
     end
   end
 
@@ -46,11 +50,11 @@ RSpec.describe "Integration Tests" do
   describe "error handling" do
     it "raises appropriate errors for invalid operations" do
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, "")
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema("")
       end.to raise_error(ArgumentError, "Schema name cannot be empty")
 
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(mock_conn, nil)
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(nil)
       end.to raise_error(ArgumentError, "Schema name cannot be empty")
     end
   end
@@ -60,8 +64,8 @@ RSpec.describe "Integration Tests" do
       dangerous_name = 'test"; DROP TABLE users; --'
       escaped_sql = 'SET search_path TO "test""; DROP TABLE users; --";'
 
-      expect(mock_conn).to receive(:exec).with(escaped_sql)
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, dangerous_name)
+      expect(mock_conn).to receive(:execute).with(escaped_sql)
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(dangerous_name)
     end
   end
 end

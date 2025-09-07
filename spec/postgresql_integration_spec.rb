@@ -20,6 +20,11 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
     skip "PostgreSQL not available: #{e.message}"
   end
 
+  before do
+    # Configure the gem to use our test connection
+    allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(conn)
+  end
+
   after do
     # Clean up test schemas
     if defined?(conn) && conn
@@ -34,7 +39,7 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
       schema_name = "test_schema"
 
       # Create the schema
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
 
       # Verify it exists
       result = conn.exec(<<~SQL)
@@ -52,8 +57,8 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
 
       # Create schema twice
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
       end.not_to raise_error
     end
   end
@@ -63,11 +68,11 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
       schema_name = "test_schema"
 
       # Create and switch to schema
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema_name)
 
       # Verify current schema
-      current_schema = PgMultitenantSchemas::SchemaSwitcher.current_schema(conn)
+      current_schema = PgMultitenantSchemas::SchemaSwitcher.current_schema
       expect(current_schema).to eq(schema_name)
     end
   end
@@ -77,11 +82,11 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
       schema_name = "test_schema"
 
       # Create then drop schema
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-      PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name)
 
       # Verify it's gone
-      exists = PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, schema_name)
+      exists = PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema_name)
       expect(exists).to be false
     end
   end
@@ -91,13 +96,13 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
       schema_name = "test_schema"
 
       # Should not exist initially
-      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, schema_name)).to be false
+      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema_name)).to be false
 
       # Create schema
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
 
       # Should exist now
-      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, schema_name)).to be true
+      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema_name)).to be true
     end
   end
 
@@ -106,8 +111,8 @@ RSpec.describe "PostgreSQL Integration Tests", :integration do
       schema_name = "test_schema"
 
       # Create schema and switch to it
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema_name)
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name)
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema_name)
 
       # Create a table
       conn.exec("CREATE TABLE test_table (id SERIAL PRIMARY KEY, name VARCHAR(50));")

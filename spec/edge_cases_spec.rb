@@ -5,21 +5,25 @@ require "spec_helper"
 RSpec.describe "Edge Cases and Error Handling" do
   let(:mock_conn) { double("PG::Connection") }
 
+  before do
+    allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(mock_conn)
+  end
+
   describe "schema name validation" do
     it "handles whitespace-only schema names" do
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, "   ")
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema("   ")
       end.to raise_error(ArgumentError, "Schema name cannot be empty")
     end
 
     it "handles special characters in schema names" do
-      expect(mock_conn).to receive(:exec).with('SET search_path TO "test-schema_123";')
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, "test-schema_123")
+      expect(mock_conn).to receive(:execute).with('SET search_path TO "test-schema_123";')
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("test-schema_123")
     end
 
     it "handles unicode characters" do
-      expect(mock_conn).to receive(:exec).with('SET search_path TO "café";')
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(mock_conn, "café")
+      expect(mock_conn).to receive(:execute).with('SET search_path TO "café";')
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("café")
     end
   end
 

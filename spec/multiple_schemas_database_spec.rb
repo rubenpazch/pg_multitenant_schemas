@@ -22,6 +22,11 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
   let(:tenant_schemas) { %w[company_a company_b company_c] }
 
+  before do
+    # Configure the gem to use our test connection
+    allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(conn)
+  end
+
   after do
     if defined?(conn) && conn
       tenant_schemas.each do |schema|
@@ -35,11 +40,11 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
     it "creates and manages multiple tenant schemas" do
       # Create all schemas
       tenant_schemas.each do |schema|
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema)
-        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, schema)).to be true
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(schema)
+        expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema)).to be true
 
         # Create identical table structure in each schema
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
         conn.exec(<<~SQL)
           CREATE TABLE customers (
             id SERIAL PRIMARY KEY,
@@ -52,7 +57,7 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
       # Insert tenant-specific data
       tenant_schemas.each_with_index do |schema, index|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
         conn.exec(<<~SQL)
           INSERT INTO customers (name, email) VALUES#{" "}
           ('Customer #{index + 1}', 'customer#{index + 1}@#{schema}.com'),
@@ -62,7 +67,7 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
       # Verify data isolation
       tenant_schemas.each_with_index do |schema, _index|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
 
         # Count records
         result = conn.exec("SELECT COUNT(*) FROM customers;")
@@ -80,29 +85,29 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
     it "handles cross-schema queries safely" do
       # Create schemas with different table structures
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, "schema_with_users")
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, "schema_with_products")
+      PgMultitenantSchemas::SchemaSwitcher.create_schema("schema_with_users")
+      PgMultitenantSchemas::SchemaSwitcher.create_schema("schema_with_products")
 
       # Create users table in first schema
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "schema_with_users")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("schema_with_users")
       conn.exec("DROP TABLE IF EXISTS users;") # Clean up first
       conn.exec("CREATE TABLE users (id SERIAL PRIMARY KEY, username VARCHAR(50));")
       conn.exec("INSERT INTO users (username) VALUES ('alice'), ('bob');")
 
       # Create products table in second schema
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "schema_with_products")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("schema_with_products")
       conn.exec("DROP TABLE IF EXISTS products;") # Clean up first
       conn.exec("CREATE TABLE products (id SERIAL PRIMARY KEY, product_name VARCHAR(50));")
       conn.exec("INSERT INTO products (product_name) VALUES ('laptop'), ('mouse');")
 
       # Verify isolation - users schema can't see products table
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "schema_with_users")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("schema_with_users")
       expect do
         conn.exec("SELECT * FROM products;")
       end.to raise_error(PG::UndefinedTable)
 
       # Verify isolation - products schema can't see users table
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "schema_with_products")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("schema_with_products")
       expect do
         conn.exec("SELECT * FROM users;")
       end.to raise_error(PG::UndefinedTable)
@@ -111,8 +116,8 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
     it "performs bulk operations across multiple schemas" do
       # Create schemas and tables
       tenant_schemas.each do |schema|
-        PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, schema)
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.create_schema(schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
 
         conn.exec(<<~SQL)
           CREATE TABLE analytics (
@@ -126,7 +131,7 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
       # Insert different analytics data per schema
       tenant_schemas.each_with_index do |schema, index|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
         event_count = (index + 1) * 50
         conn.exec("INSERT INTO analytics (event_type, count) VALUES ('page_views', #{event_count});")
       end
@@ -134,7 +139,7 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
       # Collect analytics from all schemas
       total_views = 0
       tenant_schemas.each do |schema|
-        PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, schema)
+        PgMultitenantSchemas::SchemaSwitcher.switch_schema(schema)
         result = conn.exec("SELECT count FROM analytics WHERE event_type = 'page_views';")
         total_views += result.getvalue(0, 0).to_i
       end
@@ -146,11 +151,11 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
   describe "schema cleanup with dependencies" do
     it "cleans up multiple schemas with foreign key relationships" do
       # Create two related schemas
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, "main_tenant")
-      PgMultitenantSchemas::SchemaSwitcher.create_schema(conn, "sub_tenant")
+      PgMultitenantSchemas::SchemaSwitcher.create_schema("main_tenant")
+      PgMultitenantSchemas::SchemaSwitcher.create_schema("sub_tenant")
 
       # Create tables with relationships in main schema
-      PgMultitenantSchemas::SchemaSwitcher.switch_schema(conn, "main_tenant")
+      PgMultitenantSchemas::SchemaSwitcher.switch_schema("main_tenant")
       conn.exec(<<~SQL)
         CREATE TABLE departments (
           id SERIAL PRIMARY KEY,
@@ -169,10 +174,10 @@ RSpec.describe "Multiple Schema Database Operations", :integration do
 
       # Verify CASCADE properly handles dependencies
       expect do
-        PgMultitenantSchemas::SchemaSwitcher.drop_schema(conn, "main_tenant", cascade: true)
+        PgMultitenantSchemas::SchemaSwitcher.drop_schema("main_tenant", cascade: true)
       end.not_to raise_error
 
-      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?(conn, "main_tenant")).to be false
+      expect(PgMultitenantSchemas::SchemaSwitcher.schema_exists?("main_tenant")).to be false
     end
   end
 end
