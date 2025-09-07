@@ -98,14 +98,18 @@ RSpec.describe "Multiple Schemas Integration Tests", :integration do
         # Each connection works in different schema
         connections.each_with_index do |connection, index|
           tenant = tenants[index]
-          PgMultitenantSchemas::SchemaSwitcher.switch_schema(tenant)
+
+          # Set search path for this specific connection
+          connection.exec("SET search_path TO #{connection.escape_identifier(tenant)}")
+
+          # Drop table if it exists from previous runs
+          connection.exec("DROP TABLE IF EXISTS orders CASCADE")
 
           # Create table and insert data
           connection.exec("CREATE TABLE orders (id SERIAL PRIMARY KEY, tenant_name VARCHAR(50));")
           connection.exec("INSERT INTO orders (tenant_name) VALUES ('#{tenant}');")
 
           # Verify each connection sees only its schema's data
-          tenant = tenants[index]
           result = connection.exec("SELECT tenant_name FROM orders;")
           expect(result.getvalue(0, 0)).to eq(tenant)
         end

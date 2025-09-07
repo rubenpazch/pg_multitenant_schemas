@@ -47,10 +47,6 @@ module PgMultitenantSchemas
   end
 end
 
-# Mock ApplicationRecord for testing
-class ApplicationRecord
-end
-
 # Mock Tenant model for testing
 class Tenant < ApplicationRecord
   include PgMultitenantSchemas::Rails::ModelConcern
@@ -58,6 +54,7 @@ class Tenant < ApplicationRecord
   attr_accessor :id, :subdomain, :status, :domain_base
 
   def initialize(attrs = {})
+    super()
     attrs.each { |k, v| send("#{k}=", v) if respond_to?("#{k}=") }
     @id = attrs[:id] || 1
     @subdomain = attrs[:subdomain] || "test"

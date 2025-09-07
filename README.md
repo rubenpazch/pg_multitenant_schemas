@@ -357,6 +357,32 @@ Detailed documentation for each core component:
 - **[Migration Workflow](examples/migration_workflow.rb)** - Automated migration examples
 - **[Rails Controllers](examples/rails_integration/controller_examples.rb)** - Framework integration patterns
 
+## 🧪 Testing
+
+This gem includes a comprehensive test suite with both unit and integration tests.
+
+### Running Tests
+
+```bash
+# Run unit tests only (fast, no database required)
+bundle exec rspec
+
+# Run integration tests (requires PostgreSQL)
+bundle exec rspec --tag integration
+
+# Run all tests
+bundle exec rspec --no-tag
+```
+
+### Test Categories
+
+- **Unit Tests** (65 examples): Fast, isolated component testing
+- **Integration Tests** (21 examples): Real PostgreSQL multi-schema operations
+- **Performance Tests**: Memory usage and thread safety validation
+- **Edge Cases**: Error handling and boundary condition testing
+
+See [Testing Guide](docs/testing.md) for detailed information about the test suite and [Integration Testing Guide](docs/integration_testing.md) for PostgreSQL integration testing details.
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.

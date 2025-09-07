@@ -4,6 +4,7 @@
 # Demonstrates various controller patterns for multi-tenant applications
 
 # Example 1: Basic Application Controller Setup
+# Provides tenant resolution and access control for Rails applications
 class ApplicationController < ActionController::Base
   include PgMultitenantSchemas::ControllerConcern
 
@@ -15,41 +16,52 @@ class ApplicationController < ActionController::Base
 
   # Custom tenant resolution from request
   def resolve_tenant_from_request
-    # Strategy 1: Subdomain-based resolution
-    return Tenant.active.find_by(subdomain: request.subdomain) if request.subdomain.present?
-
-    # Strategy 2: Custom domain resolution
-    return Tenant.active.find_by(domain: request.host) if request.domain.present?
-
-    # Strategy 3: User-based tenant selection
-    if user_signed_in? && current_user.current_tenant_id.present?
-      return current_user.tenants.find_by(id: current_user.current_tenant_id)
-    end
-
-    nil
+    resolve_by_subdomain || resolve_by_domain || resolve_by_user_preference
   end
 
   private
 
-  def ensure_tenant_access
-    unless @current_tenant
-      respond_to do |format|
-        format.html { redirect_to tenant_selection_path, alert: "Please select a tenant" }
-        format.json { render json: { error: "Tenant required" }, status: :unauthorized }
-      end
-      return false
-    end
+  def resolve_by_subdomain
+    return nil unless request.subdomain.present?
 
-    # Verify user has access to this tenant
-    unless current_user&.has_access_to?(@current_tenant)
-      respond_to do |format|
-        format.html { redirect_to root_path, alert: "Access denied" }
-        format.json { render json: { error: "Access denied" }, status: :forbidden }
-      end
-      return false
-    end
+    Tenant.active.find_by(subdomain: request.subdomain)
+  end
+
+  def resolve_by_domain
+    return nil unless request.domain.present?
+
+    Tenant.active.find_by(domain: request.host)
+  end
+
+  def resolve_by_user_preference
+    return nil unless user_signed_in? && current_user.current_tenant_id.present?
+
+    current_user.tenants.find_by(id: current_user.current_tenant_id)
+  end
+
+  def tenant_access_valid?
+    @current_tenant && current_user&.has_access_to?(@current_tenant)
+  end
+
+  def ensure_tenant_access
+    return handle_missing_tenant unless @current_tenant
+    return handle_access_denied unless tenant_access_valid?
 
     true
+  end
+
+  def handle_missing_tenant
+    respond_to do |format|
+      format.html { redirect_to tenant_selection_path, alert: "Please select a tenant" }
+      format.json { render json: { error: "Tenant required" }, status: :unauthorized }
+    end
+  end
+
+  def handle_access_denied
+    respond_to do |format|
+      format.html { redirect_to root_path, alert: "Access denied" }
+      format.json { render json: { error: "Access denied" }, status: :forbidden }
+    end
   end
 
   # Helper method to access current tenant in views
@@ -78,6 +90,8 @@ end
 
 # Example 2: Admin Controller with Multi-Tenant Management
 module Admin
+  # Controller for managing tenants in admin interface
+  # Allows administrators to view, manage, and switch between tenant contexts
   class TenantsController < Admin::BaseController
     # Admin controllers might need to switch between tenants
 
@@ -134,6 +148,8 @@ end
 # Example 3: API Controller with JWT-based Tenant Resolution
 module Api
   module V1
+    # Base controller for API endpoints with tenant resolution
+    # Supports JWT and API key authentication with tenant context
     class BaseController < ActionController::API
       include PgMultitenantSchemas::ControllerConcern
 
@@ -295,6 +311,8 @@ end
 
 # Example 6: WebSocket Integration
 module ApplicationCable
+  # WebSocket connection with tenant context support
+  # Establishes tenant context for real-time communication
   class Connection < ActionCable::Connection::Base
     identified_by :current_user, :current_tenant
 

@@ -70,14 +70,7 @@ module PgMultitenantSchemas
 
         value = get_result_value(result, 0, 0)
         # Handle both boolean values and string representations
-        case value
-        when true, "t", "true"
-          true
-        when false, "f", "false"
-          false
-        else
-          false
-        end
+        [true, "t", "true"].include?(value)
       end
 
       # Get current schema
