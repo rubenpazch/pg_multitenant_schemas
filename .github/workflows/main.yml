@@ -56,7 +56,7 @@ jobs:
       - name: Run unit tests
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/test
-        run: bundle exec rspec --exclude-tag integration
+        run: bundle exec rspec --exclude-pattern '**/integration/**/*_spec.rb'
         
       - name: Run integration tests
         env:

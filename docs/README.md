@@ -16,6 +16,7 @@ This directory contains detailed documentation for each core component of the PG
 | **Testing** | RSpec test suite and testing guide | [testing.md](testing.md) |
 | **Integration Testing** | PostgreSQL integration testing guide | [integration_testing.md](integration_testing.md) |
 | **CI/CD & Releases** | GitHub Actions automation setup | [github_actions_setup.md](github_actions_setup.md) |
+| **Local Workflow Testing** | Test GitHub Actions locally before push | [local_workflow_testing.md](local_workflow_testing.md) |
 
 ## 🏗️ Architecture Flow
 
@@ -61,7 +62,9 @@ Rails Application (executes in tenant schema)
 
 - **[Testing Guide](testing.md)**: Comprehensive RSpec test suite documentation
 - **[Integration Testing](integration_testing.md)**: PostgreSQL integration testing guide
+- **[Local Workflow Testing](local_workflow_testing.md)**: Test GitHub Actions locally before push
 - **Test Execution**: `bundle exec rspec` (unit tests) and `bundle exec rspec --tag integration` (integration tests)
+- **Pre-Push Testing**: `./pre-push-check.sh` (validates CI components locally)
 
 ## 🔍 Debug and Troubleshooting
 
