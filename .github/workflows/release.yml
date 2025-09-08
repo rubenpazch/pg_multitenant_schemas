@@ -1,0 +1,92 @@
+name: Release to RubyGems
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'lib/pg_multitenant_schemas/version.rb'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    if: github.repository == 'rubenpazch/pg_multitenant_schemas'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+          
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(ruby -r./lib/pg_multitenant_schemas/version -e "puts PgMultitenantSchemas::VERSION")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          
+      - name: Check if tag exists
+        id: tag_check
+        run: |
+          if git rev-parse "v${{ steps.version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Build gem
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          gem build pg_multitenant_schemas.gemspec
+          ls -la *.gem
+          
+      - name: Create release notes
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          echo "# Release $VERSION" > release_notes.md
+          echo "" >> release_notes.md
+          
+          # Extract changelog section for this version
+          if grep -q "## \[$VERSION\]" CHANGELOG.md; then
+            awk "/^## \[$VERSION\]/{flag=1; next} /^## \[/{flag=0} flag && !/^$/" CHANGELOG.md >> release_notes.md
+          else
+            echo "Release version $VERSION" >> release_notes.md
+          fi
+          
+      - name: Create Git tag
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.version }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+          
+      - name: Create GitHub Release
+        if: steps.tag_check.outputs.exists == 'false'
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.version }}
+          body_path: release_notes.md
+          files: pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Publish to RubyGems
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          mkdir -p ~/.gem
+          echo ":rubygems_api_key: ${{ secrets.RUBYGEMS_API_KEY }}" > ~/.gem/credentials
+          chmod 0600 ~/.gem/credentials
+          gem push pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem
+        env:
+          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
