@@ -7,22 +7,22 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
     Class.new do
       extend PgMultitenantSchemas::MigrationExecutor
       extend PgMultitenantSchemas::MigrationSchemaOperations
-      
+
       # Mock the migrate_tenant method that would be in the main class
       def self.migrate_tenant(schema, verbose: true, raise_on_error: true)
+        _ = verbose
+        _ = raise_on_error
         { schema: schema, status: :success, message: "Migration completed" }
       end
     end
   end
 
-  let(:test_schemas) { ["tenant_a", "tenant_b"] }
+  let(:test_schemas) { %w[tenant_a tenant_b] }
 
   before do
-    allow(test_class).to receive(:current_schema).and_return("public")
     allow(test_class).to receive(:switch_to_schema)
-    allow(test_class).to receive(:pending_migrations).and_return([])
     allow(test_class).to receive(:run_migrations)
-    allow(test_class).to receive(:schema_exists?).and_return(true)
+    allow(test_class).to receive_messages(current_schema: "public", pending_migrations: [], schema_exists?: true)
   end
 
   describe "#process_schemas_migration" do
@@ -79,9 +79,9 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
 
     context "with raise_on_error true" do
       it "raises StandardError" do
-        expect {
+        expect do
           test_class.send(:handle_missing_schema, schema_name, false, true)
-        }.to raise_error(StandardError, /does not exist/)
+        end.to raise_error(StandardError, /does not exist/)
       end
     end
   end
@@ -97,14 +97,14 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
 
     it "switches to tenant schema" do
       # Allow the method calls and set up proper mocking
-      allow(test_class).to receive(:current_schema).and_return("public")
       allow(test_class).to receive(:switch_to_schema)
-      allow(test_class).to receive(:perform_migration_for_schema).and_return(
-        { schema: schema_name, status: :success, message: "Migration completed" }
-      )
-      
+      allow(test_class).to receive_messages(current_schema: "public",
+                                            perform_migration_for_schema: {
+                                              schema: schema_name, status: :success, message: "Migration completed"
+                                            })
+
       result = test_class.send(:execute_tenant_migration, schema_name, false, true)
-      
+
       # Verify that the method completed successfully
       expect(result[:schema]).to eq(schema_name)
       expect(result[:status]).to eq(:success)
@@ -237,9 +237,9 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
 
     context "with raise_on_error true" do
       it "raises the original error" do
-        expect {
+        expect do
           test_class.send(:handle_migration_error, schema_name, error, false, true)
-        }.to raise_error(StandardError, "Database connection failed")
+        end.to raise_error(StandardError, "Database connection failed")
       end
     end
   end
@@ -310,15 +310,15 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
   end
 
   describe "#process_setup_for_tenants" do
-    let(:tenant1) { double("Tenant", subdomain: "client_a") }
-    let(:tenant2) { double("Tenant", subdomain: "client_b") }
-    let(:tenants) { [tenant1, tenant2] }
+    let(:first_tenant) { double("Tenant", subdomain: "client_a") }
+    let(:second_tenant) { double("Tenant", subdomain: "client_b") }
+    let(:tenants) { [first_tenant, second_tenant] }
 
     before do
       # Mock extract_schema_name method
-      allow(test_class).to receive(:extract_schema_name).with(tenant1).and_return("client_a")
-      allow(test_class).to receive(:extract_schema_name).with(tenant2).and_return("client_b")
-      
+      allow(test_class).to receive(:extract_schema_name).with(first_tenant).and_return("client_a")
+      allow(test_class).to receive(:extract_schema_name).with(second_tenant).and_return("client_b")
+
       # Mock setup_tenant method
       allow(test_class).to receive(:setup_tenant).and_return(
         { schema: "client_a", status: :success }
@@ -326,8 +326,8 @@ RSpec.describe PgMultitenantSchemas::MigrationExecutor do
     end
 
     it "extracts schema names from tenants" do
-      expect(test_class).to receive(:extract_schema_name).with(tenant1)
-      expect(test_class).to receive(:extract_schema_name).with(tenant2)
+      expect(test_class).to receive(:extract_schema_name).with(first_tenant)
+      expect(test_class).to receive(:extract_schema_name).with(second_tenant)
 
       test_class.send(:process_setup_for_tenants, tenants, false)
     end

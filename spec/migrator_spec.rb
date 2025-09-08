@@ -4,17 +4,15 @@ require "spec_helper"
 
 RSpec.describe PgMultitenantSchemas::Migrator do
   let(:mock_connection) { double("ActiveRecord Connection") }
-  let(:test_schemas) { ["tenant_a", "tenant_b"] }
+  let(:test_schemas) { %w[tenant_a tenant_b] }
   let(:mock_tenant) { double("Tenant", subdomain: "test_tenant") }
 
   before do
     # Mock the schema operations
     allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:connection).and_return(mock_connection)
-    allow(described_class).to receive(:tenant_schemas).and_return(test_schemas)
-    allow(described_class).to receive(:schema_exists?).and_return(true)
-    allow(described_class).to receive(:current_schema).and_return("public")
     allow(described_class).to receive(:switch_to_schema)
-    allow(described_class).to receive(:pending_migrations).and_return([])
+    allow(described_class).to receive_messages(tenant_schemas: test_schemas, schema_exists?: true,
+                                               current_schema: "public", pending_migrations: [])
     allow(described_class).to receive(:run_migrations)
   end
 
@@ -106,9 +104,9 @@ RSpec.describe PgMultitenantSchemas::Migrator do
       end
 
       it "raises error with raise_on_error true" do
-        expect {
+        expect do
           described_class.migrate_tenant(schema_name, verbose: false, raise_on_error: true)
-        }.to raise_error(StandardError, /does not exist/)
+        end.to raise_error(StandardError, /does not exist/)
       end
     end
 
@@ -128,9 +126,9 @@ RSpec.describe PgMultitenantSchemas::Migrator do
       end
 
       it "raises error with raise_on_error true" do
-        expect {
+        expect do
           described_class.migrate_tenant(schema_name, verbose: false, raise_on_error: true)
-        }.to raise_error(StandardError, "Migration error")
+        end.to raise_error(StandardError, "Migration error")
       end
     end
   end
@@ -182,19 +180,17 @@ RSpec.describe PgMultitenantSchemas::Migrator do
       end
 
       it "raises the error" do
-        expect {
+        expect do
           described_class.setup_tenant(schema_name, verbose: false)
-        }.to raise_error(StandardError, "Setup failed")
+        end.to raise_error(StandardError, "Setup failed")
       end
 
       it "displays failure message when verbose" do
-        expect {
-          begin
-            described_class.setup_tenant(schema_name, verbose: true)
-          rescue StandardError
-            # Expected to raise
-          end
-        }.to output(/Setup failed/).to_stdout
+        expect do
+          described_class.setup_tenant(schema_name, verbose: true)
+        rescue StandardError
+          # Expected to raise
+        end.to output(/Setup failed/).to_stdout
       end
     end
   end
@@ -225,9 +221,9 @@ RSpec.describe PgMultitenantSchemas::Migrator do
       end
 
       it "raises an error" do
-        expect {
+        expect do
           described_class.setup_all_tenants(verbose: false)
-        }.to raise_error(/Tenant model not found/)
+        end.to raise_error(/Tenant model not found/)
       end
     end
   end
@@ -258,19 +254,16 @@ RSpec.describe PgMultitenantSchemas::Migrator do
   end
 
   describe ".rollback_tenant" do
-    let(:schema_name) { "test_tenant" }
-    let(:steps) { 2 }
-    let(:mock_migration_context) { double("MigrationContext") }
+    it "rolls back specified number of steps" do
+      schema_name = "test_tenant"
+      steps = 2
+      mock_migration_context = double("MigrationContext")
 
-    before do
-      allow(described_class).to receive(:current_schema).and_return("public")
       allow(described_class).to receive(:switch_to_schema)
-      allow(described_class).to receive(:migration_paths).and_return(["/path/to/migrations"])
+      allow(described_class).to receive_messages(current_schema: "public", migration_paths: ["/path/to/migrations"])
       allow(ActiveRecord::Base).to receive(:connection).and_return(double(migration_context: mock_migration_context))
       allow(mock_migration_context).to receive(:rollback)
-    end
 
-    it "rolls back specified number of steps" do
       expect(mock_migration_context).to receive(:rollback)
         .with(["/path/to/migrations"], steps)
 
@@ -278,6 +271,15 @@ RSpec.describe PgMultitenantSchemas::Migrator do
     end
 
     it "switches to tenant schema before rollback" do
+      schema_name = "test_tenant"
+      steps = 2
+      mock_migration_context = double("MigrationContext")
+
+      allow(described_class).to receive(:switch_to_schema)
+      allow(described_class).to receive_messages(current_schema: "public", migration_paths: ["/path/to/migrations"])
+      allow(ActiveRecord::Base).to receive(:connection).and_return(double(migration_context: mock_migration_context))
+      allow(mock_migration_context).to receive(:rollback)
+
       expect(described_class).to receive(:switch_to_schema).with(schema_name).ordered
       expect(mock_migration_context).to receive(:rollback).ordered
 
@@ -285,8 +287,16 @@ RSpec.describe PgMultitenantSchemas::Migrator do
     end
 
     it "restores original schema after rollback" do
+      schema_name = "test_tenant"
+      steps = 2
       original_schema = "public"
-      allow(described_class).to receive(:current_schema).and_return(original_schema)
+      mock_migration_context = double("MigrationContext")
+
+      allow(described_class).to receive(:switch_to_schema)
+      allow(described_class).to receive_messages(current_schema: original_schema,
+                                                 migration_paths: ["/path/to/migrations"])
+      allow(ActiveRecord::Base).to receive(:connection).and_return(double(migration_context: mock_migration_context))
+      allow(mock_migration_context).to receive(:rollback)
 
       expect(described_class).to receive(:switch_to_schema).with(original_schema)
 
@@ -294,25 +304,38 @@ RSpec.describe PgMultitenantSchemas::Migrator do
     end
 
     context "when rollback fails" do
-      before do
-        allow(mock_migration_context).to receive(:rollback).and_raise(StandardError, "Rollback failed")
-      end
-
       it "raises the error" do
-        expect {
+        schema_name = "test_tenant"
+        steps = 2
+        mock_migration_context = double("MigrationContext")
+
+        allow(described_class).to receive(:switch_to_schema)
+        allow(described_class).to receive_messages(current_schema: "public", migration_paths: ["/path/to/migrations"])
+        allow(ActiveRecord::Base).to receive(:connection).and_return(double(migration_context: mock_migration_context))
+        allow(mock_migration_context).to receive(:rollback).and_raise(StandardError, "Rollback failed")
+
+        expect do
           described_class.rollback_tenant(schema_name, steps: steps, verbose: false)
-        }.to raise_error(StandardError, "Rollback failed")
+        end.to raise_error(StandardError, "Rollback failed")
       end
 
       it "still restores original schema" do
+        schema_name = "test_tenant"
+        steps = 2
         original_schema = "public"
-        allow(described_class).to receive(:current_schema).and_return(original_schema)
+        mock_migration_context = double("MigrationContext")
+
+        allow(described_class).to receive(:switch_to_schema)
+        allow(described_class).to receive_messages(current_schema: original_schema,
+                                                   migration_paths: ["/path/to/migrations"])
+        allow(ActiveRecord::Base).to receive(:connection).and_return(double(migration_context: mock_migration_context))
+        allow(mock_migration_context).to receive(:rollback).and_raise(StandardError, "Rollback failed")
 
         expect(described_class).to receive(:switch_to_schema).with(original_schema)
 
-        expect {
+        expect do
           described_class.rollback_tenant(schema_name, steps: steps, verbose: false)
-        }.to raise_error(StandardError)
+        end.to raise_error(StandardError)
       end
     end
   end

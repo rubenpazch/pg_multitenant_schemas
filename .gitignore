@@ -18,6 +18,9 @@
 # Temporary files
 *~
 *.tmp
+
+# Local environment files (for act testing)
+.env.local
 *.log
 
 # IDE files

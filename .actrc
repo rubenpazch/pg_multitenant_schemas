@@ -1,0 +1,17 @@
+# act configuration file
+# This configures act to run GitHub Actions locally
+
+# Use Linux AMD64 architecture for compatibility
+--container-architecture linux/amd64
+
+# Set artifact server path
+--artifact-server-path /tmp/act-artifacts
+
+# Load environment variables from local file
+--env-file .env.local
+
+# Use medium size runner image
+--platform ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Show more verbose output
+--verbose
