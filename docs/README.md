@@ -15,6 +15,7 @@ This directory contains detailed documentation for each core component of the PG
 | **Errors** | Custom exception classes | [errors.md](errors.md) |
 | **Testing** | RSpec test suite and testing guide | [testing.md](testing.md) |
 | **Integration Testing** | PostgreSQL integration testing guide | [integration_testing.md](integration_testing.md) |
+| **CI/CD & Releases** | GitHub Actions automation setup | [github_actions_setup.md](github_actions_setup.md) |
 
 ## 🏗️ Architecture Flow
 
