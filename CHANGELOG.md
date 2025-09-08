@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2025-09-07
+
+### 🔧 **Developer Experience & Testing**
+- **NEW: Local Workflow Testing**: Complete solution for testing GitHub Actions locally before push
+- **NEW: Pre-Push Validation**: `pre-push-check.sh` script validates CI components locally  
+- **NEW: GitHub Actions Testing**: `act` tool integration with configuration files
+- **NEW: Validation Scripts**: `validate-github-commands.sh` and `test-github-setup.sh`
+
+### 🚀 **CI/CD Improvements**
+- **FIXED: GitHub Actions Permissions**: Resolved permission issues with release workflow
+- **FIXED: RSpec Command**: Corrected `--exclude-pattern` usage for unit test isolation
+- **IMPROVED: Release Automation**: Enhanced release workflow with proper bot identity
+- **IMPROVED: Documentation**: Comprehensive guides for CI/CD setup and troubleshooting
+
+### 📚 **Documentation Enhancements**
+- **NEW: Local Testing Guide**: `TESTING_LOCALLY.md` and `LOCAL_TESTING_SUMMARY.md`
+- **NEW: CI/CD Setup Guide**: `docs/github_actions_setup.md` with step-by-step instructions
+- **NEW: Permissions Fix Guide**: `docs/github_actions_permissions_fix.md`
+- **NEW: Workflow Testing Guide**: `docs/local_workflow_testing.md`
+- **IMPROVED: Core Documentation**: Updated `docs/README.md` with local testing references
+
+### 🧪 **Testing Infrastructure**
+- **ENHANCED: RuboCop Compliance**: Fixed all code style violations across test suite
+- **ENHANCED: Test Organization**: Improved test structure and mocking patterns
+- **ENHANCED: Integration Testing**: Better PostgreSQL integration test support
+- **ENHANCED: Security Auditing**: Bundle audit integration in CI pipeline
+
+### 🔧 **Configuration Files**
+- **NEW: `.actrc`**: Configuration for local GitHub Actions testing
+- **NEW: `.env.local.example`**: Template for local environment variables
+- **IMPROVED: `.gitignore`**: Added local testing files to ignore list
+
+## [0.2.1] - 2025-09-06
+
 ### 🚀 **Migration System Overhaul** 
 - **NEW: Automated Migration Management**: Complete migration system for multi-tenant schemas
 - **NEW: PgMultitenantSchemas::Migrator**: Comprehensive migration management class
@@ -94,3 +128,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release
 - Basic schema switching functionality
 - PostgreSQL multitenancy support
+
+[Unreleased]: https://github.com/rubenpazch/pg_multitenant_schemas/compare/v0.2.2...HEAD
+[0.2.2]: https://github.com/rubenpazch/pg_multitenant_schemas/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/rubenpazch/pg_multitenant_schemas/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/rubenpazch/pg_multitenant_schemas/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/rubenpazch/pg_multitenant_schemas/releases/tag/v0.1.0
