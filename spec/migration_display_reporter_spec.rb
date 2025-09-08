@@ -210,7 +210,7 @@ RSpec.describe PgMultitenantSchemas::MigrationDisplayReporter do
 
     it "handles mixed status types" do
       results = [
-        { schema: "tenant_a", status: "success" },  # String instead of symbol
+        { schema: "tenant_a", status: "success" }, # String instead of symbol
         { schema: "tenant_b", status: :error }
       ]
 

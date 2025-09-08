@@ -42,7 +42,7 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
     let(:schema_name) { "test_schema" }
 
     it "delegates to SchemaSwitcher" do
-      expect(PgMultitenantSchemas::SchemaSwitcher).to receive(:schema_exists?).with(schema_name).and_return(true)
+      allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:schema_exists?).with(schema_name).and_return(true)
       result = test_class.send(:schema_exists?, schema_name)
       expect(result).to be true
     end
@@ -50,7 +50,7 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
 
   describe "#current_schema" do
     it "delegates to SchemaSwitcher" do
-      expect(PgMultitenantSchemas::SchemaSwitcher).to receive(:current_schema).and_return("public")
+      allow(PgMultitenantSchemas::SchemaSwitcher).to receive(:current_schema).and_return("public")
       result = test_class.send(:current_schema)
       expect(result).to eq("public")
     end
@@ -58,15 +58,15 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
 
   describe "#tenant_schemas" do
     let(:all_schemas) do
-      [
-        "information_schema",
-        "pg_catalog", 
-        "public",
-        "pg_temp_1",
-        "pg_toast_temp_1",
-        "pg_toast_12345",
-        "tenant_a",
-        "tenant_b"
+      %w[
+        information_schema
+        pg_catalog
+        public
+        pg_temp_1
+        pg_toast_temp_1
+        pg_toast_12345
+        tenant_a
+        tenant_b
       ]
     end
 
@@ -114,40 +114,47 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
   end
 
   describe "#run_migrations" do
+    let(:mock_connection) { double("Connection") }
+
     before do
-      allow(ActiveRecord::Base).to receive_message_chain(:connection, :migrate)
+      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
+      allow(mock_connection).to receive(:migrate)
     end
 
     it "delegates to ActiveRecord Base connection migrate" do
       test_class.send(:run_migrations)
-      expect(ActiveRecord::Base.connection).to have_received(:migrate)
+      expect(mock_connection).to have_received(:migrate)
     end
   end
 
   describe "#pending_migrations" do
-    let(:mock_migration_context) { double("MigrationContext") }
-    let(:mock_connection) { double("Connection") }
-    let(:migration1) { double("Migration", version: 1) }
-    let(:migration2) { double("Migration", version: 2) }
-    let(:migration3) { double("Migration", version: 3) }
-    let(:all_migrations) { [migration1, migration2, migration3] }
-    let(:applied_versions) { [1, 2] }
+    it "returns migrations not yet applied" do
+      mock_migration_context = double("MigrationContext")
+      mock_connection = double("Connection")
+      pending_migration = double("Migration", version: 3)
+      applied_migration = double("Migration", version: 1)
+      all_migrations = [applied_migration, pending_migration]
+      applied_versions = [1]
 
-    before do
       allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
       allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
-      allow(mock_migration_context).to receive(:migrations).and_return(all_migrations)
-      allow(mock_migration_context).to receive(:get_all_versions).and_return(applied_versions)
-    end
+      allow(mock_migration_context).to receive_messages(migrations: all_migrations, get_all_versions: applied_versions)
 
-    it "returns migrations not yet applied" do
       result = test_class.send(:pending_migrations)
 
-      expect(result).to contain_exactly(migration3)
+      expect(result).to contain_exactly(pending_migration)
     end
 
     it "returns empty array when all migrations are applied" do
-      allow(mock_migration_context).to receive(:get_all_versions).and_return([1, 2, 3])
+      mock_migration_context = double("MigrationContext")
+      mock_connection = double("Connection")
+      migration = double("Migration", version: 1)
+      all_migrations = [migration]
+      applied_versions = [1]
+
+      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
+      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
+      allow(mock_migration_context).to receive_messages(migrations: all_migrations, get_all_versions: applied_versions)
 
       result = test_class.send(:pending_migrations)
 
@@ -174,14 +181,15 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
   end
 
   describe "#migration_paths" do
-    let(:migration_paths) { ["/app/db/migrate"] }
-
-    before do
-      # Mock the migration context migrations_paths
-      allow(ActiveRecord::Base).to receive_message_chain(:connection, :migration_context, :migrations_paths).and_return(migration_paths)
-    end
-
     it "returns migration paths from ActiveRecord migration context" do
+      migration_paths = ["/app/db/migrate"]
+      mock_migration_context = double("MigrationContext")
+      mock_connection = double("Connection")
+
+      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
+      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
+      allow(mock_migration_context).to receive(:migrations_paths).and_return(migration_paths)
+
       result = test_class.send(:migration_paths)
       expect(result).to eq(migration_paths)
     end

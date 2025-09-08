@@ -10,15 +10,13 @@ RSpec.describe PgMultitenantSchemas::MigrationStatusReporter do
     end
   end
 
-  let(:test_schemas) { ["tenant_a", "tenant_b"] }
+  let(:test_schemas) { %w[tenant_a tenant_b] }
   let(:mock_connection) { double("ActiveRecord Connection") }
 
   before do
-    allow(test_class).to receive(:tenant_schemas).and_return(test_schemas)
-    allow(test_class).to receive(:current_schema).and_return("public")
     allow(test_class).to receive(:switch_to_schema)
-    allow(test_class).to receive(:pending_migrations).and_return([])
-    allow(test_class).to receive(:applied_migrations).and_return(["001", "002"])
+    allow(test_class).to receive_messages(tenant_schemas: test_schemas, current_schema: "public",
+                                          pending_migrations: [], applied_migrations: %w[001 002])
   end
 
   describe "#migration_status" do
@@ -46,8 +44,7 @@ RSpec.describe PgMultitenantSchemas::MigrationStatusReporter do
 
     context "when schema is up to date" do
       before do
-        allow(test_class).to receive(:pending_migrations).and_return([])
-        allow(test_class).to receive(:applied_migrations).and_return(["001", "002"])
+        allow(test_class).to receive_messages(pending_migrations: [], applied_migrations: %w[001 002])
       end
 
       it "returns up_to_date status" do
@@ -81,8 +78,7 @@ RSpec.describe PgMultitenantSchemas::MigrationStatusReporter do
       let(:pending_migration) { double("Migration", name: "AddUsersTable") }
 
       before do
-        allow(test_class).to receive(:pending_migrations).and_return([pending_migration])
-        allow(test_class).to receive(:applied_migrations).and_return(["001"])
+        allow(test_class).to receive_messages(pending_migrations: [pending_migration], applied_migrations: ["001"])
       end
 
       it "returns pending status" do
