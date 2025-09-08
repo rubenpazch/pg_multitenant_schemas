@@ -32,6 +32,23 @@ To enable automatic releases to RubyGems, you need to set up a GitHub secret wit
 6. Value: Paste your RubyGems API key
 7. Click "Add secret"
 
+### 3. Configure Repository Permissions
+
+**Important:** Configure GitHub Actions permissions to allow the release workflow to create tags and releases:
+
+1. Go to your repository Settings
+2. Navigate to **Actions > General**
+3. Under "Workflow permissions":
+   - Select **"Read and write permissions"**
+   - Check **"Allow GitHub Actions to create and approve pull requests"**
+4. Click **Save**
+
+Without these permissions, you'll get errors like:
+```
+remote: Permission to username/repo.git denied to github-actions[bot].
+fatal: unable to access 'https://github.com/username/repo/': The requested URL returned error: 403
+```
+
 ## How the Workflows Work
 
 ### CI Workflow
