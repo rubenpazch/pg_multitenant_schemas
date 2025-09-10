@@ -14,7 +14,10 @@ module PgMultitenantSchemas
 
       # Add rake tasks
       rake_tasks do
-        load File.expand_path("../tasks/pg_multitenant_schemas.rake", __dir__)
+        # Load all task files
+        Dir[File.expand_path("../tasks/*.rake", __dir__)].each do |task_file|
+          load task_file
+        end
       end
 
       # Add generators

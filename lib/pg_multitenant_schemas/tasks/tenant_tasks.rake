@@ -1,8 +1,5 @@
 # frozen_string_literal: true
 
-# Load individual task files
-Dir[File.join(File.dirname(__FILE__), "*.rake")].each { |file| load file unless file == __FILE__ }
-
 require_relative "../tenant_task_helpers"
 
 namespace :tenants do
