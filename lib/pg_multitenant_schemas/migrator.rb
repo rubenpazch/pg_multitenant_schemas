@@ -73,30 +73,42 @@ module PgMultitenantSchemas
         puts "⏪ Rolling back #{steps} steps for #{schema_name}" if verbose
         original_schema = current_schema
 
-        begin
-          switch_to_schema(schema_name)
-          migration_context = get_migration_context
-          unless migration_context
-            puts "  ❌ Cannot rollback: migration context not available" if verbose
-            return
-          end
-          migration_context.rollback(migration_paths, steps)
-          puts "  ✅ Rollback completed" if verbose
-        rescue StandardError => e
-          puts "  ❌ Rollback failed: #{e.message}" if verbose
-          raise
-        ensure
-          switch_to_schema(original_schema) if original_schema
-        end
+        perform_rollback(schema_name, steps, verbose)
+      ensure
+        switch_to_schema(original_schema) if original_schema
       end
 
       private
 
-      def get_migration_context
+      def perform_rollback(schema_name, steps, verbose)
+        switch_to_schema(schema_name)
+        migration_context_obj = migration_context
+
+        unless migration_context_obj
+          puts "  ❌ Cannot rollback: migration context not available" if verbose
+          return
+        end
+
+        migration_context_obj.rollback(migration_paths, steps)
+        puts "  ✅ Rollback completed" if verbose
+      rescue StandardError => e
+        puts "  ❌ Rollback failed: #{e.message}" if verbose
+        raise
+      end
+
+      def migration_context
         # Return nil if ActiveRecord is not available (for tests)
         return nil unless defined?(ActiveRecord::Base)
-        
+
         # Rails 8 compatibility: Try multiple approaches
+        find_migration_context
+      rescue StandardError => e
+        # Use explicit Rails logger to avoid namespace conflicts
+        ::Rails.logger&.warn("Failed to get migration context: #{e.message}") if defined?(::Rails)
+        nil
+      end
+
+      def find_migration_context
         if ActiveRecord::Base.respond_to?(:migration_context)
           # Rails 8+: Try base migration context first
           ActiveRecord::Base.migration_context
@@ -105,33 +117,28 @@ module PgMultitenantSchemas
           ActiveRecord::Base.connection.migration_context
         elsif defined?(ActiveRecord::MigrationContext)
           # Fallback: Create a new migration context with default paths
-          paths = if defined?(Rails) && Rails.application
-                     Rails.application.paths["db/migrate"].expanded
-                   else
-                     ["db/migrate"]
-                   end
-          ActiveRecord::MigrationContext.new(paths)
-        else
-          # Last resort fallback
-          nil
+          create_fallback_migration_context
         end
-      rescue StandardError => e
-        # Use explicit Rails logger to avoid namespace conflicts
-        ::Rails.logger&.warn("Failed to get migration context: #{e.message}") if defined?(::Rails)
-        nil
+      end
+
+      def create_fallback_migration_context
+        paths = if defined?(::Rails) && ::Rails.application
+                  ::Rails.application.paths["db/migrate"].expanded
+                else
+                  ["db/migrate"]
+                end
+        ActiveRecord::MigrationContext.new(paths)
       end
 
       def migration_paths
-        migration_context = get_migration_context
-        if migration_context && migration_context.respond_to?(:migrations_paths)
-          migration_context.migrations_paths
-        else
+        migration_context_obj = migration_context
+        if migration_context_obj.respond_to?(:migrations_paths)
+          migration_context_obj.migrations_paths
+        elsif defined?(::Rails) && ::Rails.application
           # Fallback to default Rails migration paths
-          if defined?(Rails) && Rails.application
-            Rails.application.paths["db/migrate"].expanded
-          else
-            ["db/migrate"]
-          end
+          ::Rails.application.paths["db/migrate"].expanded
+        else
+          ["db/migrate"]
         end
       end
     end

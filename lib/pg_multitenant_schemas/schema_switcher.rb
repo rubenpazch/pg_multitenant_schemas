@@ -88,7 +88,14 @@ module PgMultitenantSchemas
           ORDER BY schema_name
         SQL
 
+        extract_schemas_from_result(result)
+      end
+
+      private
+
+      def extract_schemas_from_result(result)
         schemas = []
+
         if result.respond_to?(:rows)
           # Rails ActiveRecord::Result
           result.rows.each { |row| schemas << row[0] }
@@ -97,15 +104,17 @@ module PgMultitenantSchemas
           result.each { |row| schemas << row["schema_name"] }
         else
           # Fallback for other result types
-          (0...result.ntuples).each do |i|
-            schemas << get_result_value(result, i, 0)
-          end
+          extract_schemas_fallback(result, schemas)
         end
 
         schemas
       end
 
-      private
+      def extract_schemas_fallback(result, schemas)
+        (0...result.ntuples).each do |i|
+          schemas << get_result_value(result, i, 0)
+        end
+      end
 
       # Execute SQL - handles both Rails connections and raw PG connections
       def execute_sql(conn, sql)

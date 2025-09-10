@@ -35,47 +35,53 @@ module PgMultitenantSchemas
 
     def run_migrations
       # Use the migration context to run migrations
-      migration_context = get_migration_context
-      return unless migration_context
-      
-      migration_context.migrate
+      migration_context_obj = migration_context
+      return unless migration_context_obj
+
+      migration_context_obj.migrate
     end
 
     def pending_migrations
-      migration_context = get_migration_context
-      return [] unless migration_context
-      
-      all_migrations = migration_context.migrations
-      applied_versions = get_applied_versions
-      
+      migration_context_obj = migration_context
+      return [] unless migration_context_obj
+
+      all_migrations = migration_context_obj.migrations
+      applied_version_list = applied_versions
+
       all_migrations.reject do |migration|
-        applied_versions.include?(migration.version)
+        applied_version_list.include?(migration.version)
       end
     end
 
     def applied_migrations
-      get_applied_versions
+      applied_versions
     end
 
     def migration_paths
-      migration_context = get_migration_context
-      if migration_context && migration_context.respond_to?(:migrations_paths)
-        migration_context.migrations_paths
-      else
+      migration_context_obj = migration_context
+      if migration_context_obj.respond_to?(:migrations_paths)
+        migration_context_obj.migrations_paths
+      elsif defined?(::Rails) && ::Rails.application
         # Fallback to default Rails migration paths
-        if defined?(Rails) && Rails.application
-          Rails.application.paths["db/migrate"].expanded
-        else
-          ["db/migrate"]
-        end
+        ::Rails.application.paths["db/migrate"].expanded
+      else
+        ["db/migrate"]
       end
     end
 
-    def get_migration_context
+    def migration_context
       # Return nil if ActiveRecord is not available (for tests)
       return nil unless defined?(ActiveRecord::Base)
-      
+
       # Rails 8 compatibility: Try multiple approaches
+      find_migration_context
+    rescue StandardError => e
+      # Use explicit Rails logger to avoid namespace conflicts
+      ::Rails.logger&.warn("Failed to get migration context: #{e.message}") if defined?(::Rails)
+      nil
+    end
+
+    def find_migration_context
       if ActiveRecord::Base.respond_to?(:migration_context)
         # Rails 8+: Try base migration context first
         ActiveRecord::Base.migration_context
@@ -84,53 +90,59 @@ module PgMultitenantSchemas
         ActiveRecord::Base.connection.migration_context
       elsif defined?(ActiveRecord::MigrationContext)
         # Fallback: Create a new migration context with default paths
-        paths = if defined?(Rails) && Rails.application
-                   Rails.application.paths["db/migrate"].expanded
-                 else
-                   ["db/migrate"]
-                 end
-        ActiveRecord::MigrationContext.new(paths)
-      else
-        # Last resort fallback
-        nil
+        create_fallback_migration_context
       end
-    rescue StandardError => e
-      # Use explicit Rails logger to avoid namespace conflicts
-      ::Rails.logger&.warn("Failed to get migration context: #{e.message}") if defined?(::Rails)
-      nil
+    end
+
+    def create_fallback_migration_context
+      paths = if defined?(::Rails) && ::Rails.application
+                ::Rails.application.paths["db/migrate"].expanded
+              else
+                ["db/migrate"]
+              end
+      ActiveRecord::MigrationContext.new(paths)
     end
 
     # Get applied migration versions with Rails 8 compatibility
-    def get_applied_versions
+    def applied_versions
       # Return empty array if ActiveRecord is not available (for tests)
       return [] unless defined?(ActiveRecord::Base)
-      
-      # Try using migration context first (for tests and Rails 7)
-      migration_context = get_migration_context
-      if migration_context && migration_context.respond_to?(:get_all_versions)
-        return migration_context.get_all_versions
-      end
-      
-      # Fallback to direct database query (Rails 8)
-      connection = ActiveRecord::Base.connection
-      table_name = "schema_migrations"
-      
-      # Ensure the schema_migrations table exists
-      unless connection.table_exists?(table_name)
-        # Create the table if it doesn't exist
-        connection.create_table(table_name, id: false) do |t|
-          t.string :version, null: false
-        end
-        connection.add_index(table_name, :version, unique: true, name: "unique_schema_migrations")
-        return []
-      end
-      
-      # Query the table directly for maximum compatibility
-      connection.select_values("SELECT version FROM #{table_name} ORDER BY version")
+
+      applied_versions_from_context || applied_versions_from_database
     rescue StandardError => e
       # If anything fails, return empty array
       ::Rails.logger&.warn("Failed to get applied versions: #{e.message}") if defined?(::Rails)
       []
+    end
+
+    def applied_versions_from_context
+      # Try using migration context first (for tests and Rails 7)
+      migration_context_obj = migration_context
+      return migration_context_obj.get_all_versions if migration_context_obj.respond_to?(:get_all_versions)
+
+      nil
+    end
+
+    def applied_versions_from_database
+      # Fallback to direct database query (Rails 8)
+      connection = ActiveRecord::Base.connection
+      table_name = "schema_migrations"
+
+      ensure_schema_migrations_table_exists(connection, table_name)
+
+      # Query the table directly for maximum compatibility
+      connection.select_values("SELECT version FROM #{table_name} ORDER BY version")
+    end
+
+    def ensure_schema_migrations_table_exists(connection, table_name)
+      # Ensure the schema_migrations table exists
+      return if connection.table_exists?(table_name)
+
+      # Create the table if it doesn't exist
+      connection.create_table(table_name, id: false) do |t|
+        t.string :version, null: false
+      end
+      connection.add_index(table_name, :version, unique: true, name: "unique_schema_migrations")
     end
   end
 end

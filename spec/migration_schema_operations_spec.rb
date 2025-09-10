@@ -117,7 +117,7 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
     let(:mock_migration_context) { double("MigrationContext") }
 
     before do
-      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
+      allow(test_class).to receive(:migration_context).and_return(mock_migration_context)
       allow(mock_migration_context).to receive(:migrate)
     end
 
@@ -135,8 +135,8 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
       all_migrations = [applied_migration, pending_migration]
       applied_versions = [1]
 
-      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
-      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
+      allow(test_class).to receive_messages(migration_context: mock_migration_context,
+                                            applied_versions: applied_versions)
       allow(mock_migration_context).to receive(:migrations).and_return(all_migrations)
 
       result = test_class.send(:pending_migrations)
@@ -150,8 +150,8 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
       all_migrations = [migration]
       applied_versions = [1]
 
-      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
-      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
+      allow(test_class).to receive_messages(migration_context: mock_migration_context,
+                                            applied_versions: applied_versions)
       allow(mock_migration_context).to receive(:migrations).and_return(all_migrations)
 
       result = test_class.send(:pending_migrations)
@@ -164,7 +164,7 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
     let(:applied_versions) { [1, 2, 3] }
 
     before do
-      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
+      allow(test_class).to receive(:applied_versions).and_return(applied_versions)
     end
 
     it "returns all applied migration versions" do
@@ -179,7 +179,7 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
       migration_paths = ["/app/db/migrate"]
       mock_migration_context = double("MigrationContext")
 
-      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
+      allow(test_class).to receive(:migration_context).and_return(mock_migration_context)
       allow(mock_migration_context).to receive(:migrations_paths).and_return(migration_paths)
 
       result = test_class.send(:migration_paths)
