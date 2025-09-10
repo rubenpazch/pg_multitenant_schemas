@@ -75,13 +75,63 @@ module PgMultitenantSchemas
 
         begin
           switch_to_schema(schema_name)
-          ActiveRecord::Base.connection.migration_context.rollback(migration_paths, steps)
+          migration_context = get_migration_context
+          unless migration_context
+            puts "  ❌ Cannot rollback: migration context not available" if verbose
+            return
+          end
+          migration_context.rollback(migration_paths, steps)
           puts "  ✅ Rollback completed" if verbose
         rescue StandardError => e
           puts "  ❌ Rollback failed: #{e.message}" if verbose
           raise
         ensure
           switch_to_schema(original_schema) if original_schema
+        end
+      end
+
+      private
+
+      def get_migration_context
+        # Return nil if ActiveRecord is not available (for tests)
+        return nil unless defined?(ActiveRecord::Base)
+        
+        # Rails 8 compatibility: Try multiple approaches
+        if ActiveRecord::Base.respond_to?(:migration_context)
+          # Rails 8+: Try base migration context first
+          ActiveRecord::Base.migration_context
+        elsif ActiveRecord::Base.connection.respond_to?(:migration_context)
+          # Rails 7: Use connection migration context
+          ActiveRecord::Base.connection.migration_context
+        elsif defined?(ActiveRecord::MigrationContext)
+          # Fallback: Create a new migration context with default paths
+          paths = if defined?(Rails) && Rails.application
+                     Rails.application.paths["db/migrate"].expanded
+                   else
+                     ["db/migrate"]
+                   end
+          ActiveRecord::MigrationContext.new(paths)
+        else
+          # Last resort fallback
+          nil
+        end
+      rescue StandardError => e
+        # Use explicit Rails logger to avoid namespace conflicts
+        ::Rails.logger&.warn("Failed to get migration context: #{e.message}") if defined?(::Rails)
+        nil
+      end
+
+      def migration_paths
+        migration_context = get_migration_context
+        if migration_context && migration_context.respond_to?(:migrations_paths)
+          migration_context.migrations_paths
+        else
+          # Fallback to default Rails migration paths
+          if defined?(Rails) && Rails.application
+            Rails.application.paths["db/migrate"].expanded
+          else
+            ["db/migrate"]
+          end
         end
       end
     end

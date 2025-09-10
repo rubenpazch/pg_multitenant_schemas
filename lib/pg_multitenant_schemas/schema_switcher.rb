@@ -80,6 +80,31 @@ module PgMultitenantSchemas
         get_result_value(result, 0, 0)
       end
 
+      # List all schemas in the database
+      def list_schemas
+        conn = connection
+        result = execute_sql(conn, <<~SQL)
+          SELECT schema_name FROM information_schema.schemata#{" "}
+          ORDER BY schema_name
+        SQL
+
+        schemas = []
+        if result.respond_to?(:rows)
+          # Rails ActiveRecord::Result
+          result.rows.each { |row| schemas << row[0] }
+        elsif result.respond_to?(:each)
+          # Raw PG::Result
+          result.each { |row| schemas << row["schema_name"] }
+        else
+          # Fallback for other result types
+          (0...result.ntuples).each do |i|
+            schemas << get_result_value(result, i, 0)
+          end
+        end
+
+        schemas
+      end
+
       private
 
       # Execute SQL - handles both Rails connections and raw PG connections

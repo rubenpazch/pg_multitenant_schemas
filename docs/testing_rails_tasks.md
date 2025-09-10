@@ -9,6 +9,8 @@ The `rails tenants:list` command only works **within a Rails application** that 
 ✅ **Removed circular dependency** in rake task loading
 ✅ **Eliminated duplicate task files** (`pg_multitenant_schemas.rake` was identical to `tenant_tasks.rake`)
 ✅ **Updated railtie** to load all task files properly
+✅ **Added missing `list_schemas` method** to `SchemaSwitcher` class
+✅ **Fixed Rails 8 migration_context compatibility** - Updated migration handling for Rails 8
 
 ## 🚀 How to Test the Rails Tasks
 
@@ -87,6 +89,15 @@ After including the gem in a Rails app, you'll have these tasks:
 - ✅ **Fixed**: Circular dependency in task loading removed
 - Make sure you're in a Rails application directory
 - Run `bundle install` after adding the gem
+
+### "NoMethodError: undefined method 'list_schemas'"  
+- ✅ **Fixed**: Added missing `list_schemas` method to `SchemaSwitcher`
+- Update to the latest version of the gem
+
+### "NoMethodError: undefined method 'migration_context'"
+- ✅ **Fixed**: Updated migration handling for Rails 8 compatibility
+- The gem now properly handles migration context access across Rails versions
+- Update to the latest version of the gem
 
 ### "No such task"
 - Ensure the gem is properly added to your Rails app's Gemfile

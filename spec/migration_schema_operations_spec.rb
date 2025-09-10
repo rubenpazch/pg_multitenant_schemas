@@ -114,31 +114,30 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
   end
 
   describe "#run_migrations" do
-    let(:mock_connection) { double("Connection") }
+    let(:mock_migration_context) { double("MigrationContext") }
 
     before do
-      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
-      allow(mock_connection).to receive(:migrate)
+      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
+      allow(mock_migration_context).to receive(:migrate)
     end
 
-    it "delegates to ActiveRecord Base connection migrate" do
+    it "delegates to migration context migrate" do
       test_class.send(:run_migrations)
-      expect(mock_connection).to have_received(:migrate)
+      expect(mock_migration_context).to have_received(:migrate)
     end
   end
 
   describe "#pending_migrations" do
     it "returns migrations not yet applied" do
       mock_migration_context = double("MigrationContext")
-      mock_connection = double("Connection")
       pending_migration = double("Migration", version: 3)
       applied_migration = double("Migration", version: 1)
       all_migrations = [applied_migration, pending_migration]
       applied_versions = [1]
 
-      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
-      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
-      allow(mock_migration_context).to receive_messages(migrations: all_migrations, get_all_versions: applied_versions)
+      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
+      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
+      allow(mock_migration_context).to receive(:migrations).and_return(all_migrations)
 
       result = test_class.send(:pending_migrations)
 
@@ -147,14 +146,13 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
 
     it "returns empty array when all migrations are applied" do
       mock_migration_context = double("MigrationContext")
-      mock_connection = double("Connection")
       migration = double("Migration", version: 1)
       all_migrations = [migration]
       applied_versions = [1]
 
-      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
-      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
-      allow(mock_migration_context).to receive_messages(migrations: all_migrations, get_all_versions: applied_versions)
+      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
+      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
+      allow(mock_migration_context).to receive(:migrations).and_return(all_migrations)
 
       result = test_class.send(:pending_migrations)
 
@@ -163,14 +161,10 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
   end
 
   describe "#applied_migrations" do
-    let(:mock_migration_context) { double("MigrationContext") }
-    let(:mock_connection) { double("Connection") }
     let(:applied_versions) { [1, 2, 3] }
 
     before do
-      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
-      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
-      allow(mock_migration_context).to receive(:get_all_versions).and_return(applied_versions)
+      allow(test_class).to receive(:get_applied_versions).and_return(applied_versions)
     end
 
     it "returns all applied migration versions" do
@@ -184,10 +178,8 @@ RSpec.describe PgMultitenantSchemas::MigrationSchemaOperations do
     it "returns migration paths from ActiveRecord migration context" do
       migration_paths = ["/app/db/migrate"]
       mock_migration_context = double("MigrationContext")
-      mock_connection = double("Connection")
 
-      allow(ActiveRecord::Base).to receive(:connection).and_return(mock_connection)
-      allow(mock_connection).to receive(:migration_context).and_return(mock_migration_context)
+      allow(test_class).to receive(:get_migration_context).and_return(mock_migration_context)
       allow(mock_migration_context).to receive(:migrations_paths).and_return(migration_paths)
 
       result = test_class.send(:migration_paths)

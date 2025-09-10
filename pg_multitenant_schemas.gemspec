@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.authors = ["Ruben Paz"]
   spec.email = ["rubenpazchuspe@outlook.com"]
 
-  spec.summary = "Modern PostgreSQL schema-based multitenancy for Rails 8+ applications"
+  spec.summary = "Modern PostgreSQL schema-based multitenancy for Rails 7+ applications"
   spec.description = "A modern Ruby gem that provides PostgreSQL schema-based multitenancy with automatic tenant " \
-                     "resolution and schema switching. Built for Rails 8+ and Ruby 3.3+, focusing on security, " \
+                     "resolution and schema switching. Compatible with Rails 7+ and Ruby 3.0+, focusing on security, " \
                      "performance, and developer experience. Perfect for modern SaaS applications requiring " \
                      "secure tenant isolation."
   spec.homepage = "https://github.com/rubenpazch/pg_multitenant_schemas"
@@ -34,8 +34,8 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Runtime dependencies - Modern Rails only
-  spec.add_dependency "activerecord", ">= 8.0", "< 9.0"
-  spec.add_dependency "activesupport", ">= 8.0", "< 9.0"
+  # Runtime dependencies - Rails 7+ support with Rails 8 optimizations
+  spec.add_dependency "activerecord", ">= 7.0", "< 9.0"
+  spec.add_dependency "activesupport", ">= 7.0", "< 9.0"
   spec.add_dependency "pg", "~> 1.5"
 end

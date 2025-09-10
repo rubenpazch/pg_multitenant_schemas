@@ -3,14 +3,14 @@
 [![Gem Version](https://badge.fury.io/rb/pg_multitenant_schemas.svg)](https://badge.fury.io/rb/pg_multitenant_schemas)
 [![Ruby](https://github.com/yourusername/pg_multitenant_schemas/actions/workflows/main.yml/badge.svg)](https://github.com/yourusername/pg_multitenant_schemas/actions/workflows/main.yml)
 
-A modern Ruby gem that provides PostgreSQL schema-based multitenancy with automatic tenant resolution and schema switching. Built for Rails 8+ and Ruby 3.3+, focusing on security, performance, and developer experience.
+A modern Ruby gem that provides PostgreSQL schema-based multitenancy with automatic tenant resolution and schema switching. Compatible with Rails 7+ and Ruby 3.0+, with optimizations for Rails 8, focusing on security, performance, and developer experience.
 
 ## ✨ Features
 
 - 🏢 **Schema-based multitenancy** - Complete tenant isolation using PostgreSQL schemas
 - 🔄 **Automatic schema switching** - Seamlessly switch between tenant schemas  
 - 🌐 **Subdomain resolution** - Extract tenant from request subdomains
-- � **Rails 8+ optimized** - Built for modern Rails applications
+- 🔄 **Rails 7+ compatible** - Works with Rails 7 and optimized for Rails 8
 - �️ **Security-first design** - Database-level tenant isolation
 - 🧵 **Thread-safe** - Safe for concurrent operations
 - 📝 **Comprehensive logging** - Track schema operations
@@ -20,8 +20,8 @@ A modern Ruby gem that provides PostgreSQL schema-based multitenancy with automa
 
 ## Requirements
 
-- Ruby 3.4+
-- Rails 8.0+
+- Ruby 3.0+
+- Rails 7.0+
 - PostgreSQL 12+
 - **pg gem**: 1.5 or higher
 

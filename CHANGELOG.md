@@ -5,9 +5,46 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.2.7] - 2025-01-20
 
-## [0.2.2] - 2025-09-07
+### 🔧 **Rails 8 Migration Context & Logger Fixes**
+- **FIXED: Rails Logger Namespace Conflict**: Fixed `undefined method 'logger' for module PgMultitenantSchemas::Rails` error
+- **FIXED: Migration Context Method**: Rails 8 doesn't have `ActiveRecord::Base.migration_context`, use `MigrationContext.new` instead
+- **ENHANCED: Migration Path Detection**: Auto-detect Rails migration paths for Rails 8 compatibility
+- **ROBUST: Error Handling**: Use explicit `::Rails` namespace to avoid conflicts
+
+## [0.2.6] - 2025-01-20
+
+### 🔧 **Rails 8 Migration Context Fix**
+- **FIXED: migration_context Error**: Fixed `undefined method 'migration_context' for ActiveRecord connection` error
+- **SIMPLIFIED: Migration Context Access**: Use only `ActiveRecord::Base.migration_context` for consistency
+- **ENHANCED: Error Handling**: Added comprehensive error handling for migration context failures
+- **ROBUST: Rails 8 Support**: Completed Rails 8 compatibility for tenant migration operations
+
+## [0.2.5] - 2025-01-20
+
+### 🔧 **Rails 8 Migration Fixes**
+- **FIXED: Rails 8 table_exists? Error**: Fixed `undefined method 'table_exists?' for class ActiveRecord::SchemaMigration` error
+- **FIXED: Rails 8 table_name Error**: Fixed `undefined method 'table_name' for class ActiveRecord::SchemaMigration` error
+- **FIXED: Rails 8 create_table Error**: Fixed `undefined method 'create_table' for class ActiveRecord::SchemaMigration` error
+- **ENHANCED: Migration Context Handling**: Simplified MigrationContext usage for Rails 8 compatibility 
+- **IMPROVED: Applied Versions Detection**: Direct database queries for retrieving applied migration versions
+- **ROBUST: Error Handling**: Added guard clauses and fallbacks for test environments
+
+## [0.2.4] - 2025-01-20
+
+### 🔄 **Rails Compatibility Improvements**
+- **NEW: Rails 7+ Support**: Expanded compatibility from Rails 7.0+ while maintaining Rails 8 optimizations
+- **FIXED: Rails 8 Migration Context**: Updated migration handling for Rails 8's new migration context patterns
+- **FIXED: Missing Methods**: Added `list_schemas` method to `SchemaSwitcher` for Rails task compatibility
+- **FIXED: Rake Task Loading**: Resolved circular dependency issues in Rails task system
+
+### 🛠️ **Internal Improvements**
+- **ENHANCED: Migration System**: Added compatibility layer for migration context access across Rails versions
+- **IMPROVED: Error Handling**: Better error messages for migration context failures
+- **UPDATED: Dependencies**: Broadened Rails dependency range to support Rails 7.0+ through 8.x
+
+## [0.2.3] - 2025-01-17
 
 ### 🔧 **Developer Experience & Testing**
 - **NEW: Local Workflow Testing**: Complete solution for testing GitHub Actions locally before push
