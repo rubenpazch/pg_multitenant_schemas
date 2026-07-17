@@ -24,6 +24,12 @@ Style/Documentation:
     - 'spec/**/*'
     - 'rails_integration/**/*'
 
+# Example files intentionally define multiple classes/modules to demonstrate usage
+Style/OneClassPerFile:
+  Exclude:
+    - 'examples/**/*'
+    - 'spec/**/*'
+
 # Metrics - Allow longer blocks in specs
 Metrics/BlockLength:
   Enabled: true

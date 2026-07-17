@@ -1,0 +1,85 @@
+<%# Switch active schema context %>
+<div class="switch-bar">
+  <label>Active schema:</label>
+  <span class="schema-badge" id="current-schema-badge"><%= @current_schema %></span>
+
+  <%= form_with url: "/pg_multitenant_schemas/tenants/switch", method: :post, local: true do |f| %>
+    <%= f.select :schema,
+          options_for_select(@schemas, @current_schema),
+          { include_blank: false },
+          class: "",
+          id: "schema-select" %>
+    <%= f.submit "Switch →", class: "btn btn-ghost btn-sm" %>
+  <% end %>
+</div>
+
+<script>
+  // Update badge when selection changes
+  document.getElementById('schema-select')?.addEventListener('change', function(e) {
+    document.getElementById('current-schema-badge').textContent = e.target.value;
+  });
+</script>
+
+<%# Toolbar %>
+<div class="toolbar" style="margin-bottom:1rem;">
+  <%= link_to "＋ New Tenant", "/pg_multitenant_schemas/tenants/new", class: "btn btn-primary" %>
+
+  <%= form_with url: "/pg_multitenant_schemas/tenants/migrate_all", method: :post, local: true do |f| %>
+    <%= f.submit "⚡ Migrate All", class: "btn btn-yellow",
+          data: { confirm: "Run pending migrations on all tenant schemas?" } %>
+  <% end %>
+</div>
+
+<%# Tenant table %>
+<div class="card">
+  <div class="card-header">
+    <h2>Tenants <span style="font-weight:400;color:#9ca3af;">(<%= @tenants.count %>)</span></h2>
+  </div>
+
+  <% if @tenants.empty? %>
+    <div class="empty">No tenants yet. Create your first one above.</div>
+  <% else %>
+    <table>
+      <thead>
+        <tr>
+          <th>Subdomain</th>
+          <th>Name</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @tenants.each do |tenant| %>
+          <tr>
+            <td><span class="schema-badge"><%= tenant.subdomain %></span></td>
+            <td><%= tenant.try(:name) || "—" %></td>
+            <td>
+              <% status = tenant.try(:status).to_s %>
+              <% badge_class = { "active" => "badge-green", "trial" => "badge-yellow",
+                                 "inactive" => "badge-gray", "suspended" => "badge-red" }[status] || "badge-gray" %>
+              <span class="badge <%= badge_class %>"><%= status.presence || "—" %></span>
+            </td>
+            <td>
+              <div class="actions">
+                <%= link_to "📊 Status",
+                      "/pg_multitenant_schemas/tenants/#{tenant.id}/migration_status",
+                      class: "btn btn-ghost btn-sm" %>
+
+                <%= form_with url: "/pg_multitenant_schemas/tenants/#{tenant.id}/migrate",
+                      method: :post, local: true, style: "display:inline" do |f| %>
+                  <%= f.submit "▶ Migrate", class: "btn btn-green btn-sm" %>
+                <% end %>
+
+                <%= form_with url: "/pg_multitenant_schemas/tenants/#{tenant.id}",
+                      method: :delete, local: true, style: "display:inline" do |f| %>
+                  <%= f.submit "✕ Delete", class: "btn btn-red btn-sm",
+                        data: { confirm: "Delete tenant '#{tenant.subdomain}' and drop its schema? This is irreversible." } %>
+                <% end %>
+              </div>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

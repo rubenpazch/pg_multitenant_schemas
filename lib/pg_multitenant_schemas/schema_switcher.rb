@@ -1,16 +1,36 @@
 # frozen_string_literal: true
 
 module PgMultitenantSchemas
-  # Core schema switching functionality
+  # Low-level PostgreSQL schema switching and management
+  #
+  # The SchemaSwitcher class provides direct access to PostgreSQL schema operations.
+  # It handles both Rails and raw PG connections transparently.
+  #
+  # @example Switching schemas
+  #   PgMultitenantSchemas::SchemaSwitcher.switch_schema('tenant_123')
+  #
+  # @example Creating a schema
+  #   PgMultitenantSchemas::SchemaSwitcher.create_schema('new_tenant')
+  #
+  # @example Listing all schemas
+  #   PgMultitenantSchemas::SchemaSwitcher.list_schemas
+  #   #=> ["public", "tenant_123", "tenant_456"]
   class SchemaSwitcher
     class << self
       # Initialize connection management
+      #
+      # Called by the Railtie when Rails starts. No special initialization needed.
+      #
+      # @return [void]
       def initialize_connection
         # This is called by the Railtie when Rails starts
         # No special initialization needed as we use the configured connection class
       end
 
       # Get the database connection from the configured connection class
+      #
+      # @return [ActiveRecord::ConnectionAdapters::AbstractAdapter, PG::Connection]
+      # @raise [PgMultitenantSchemas::ConnectionError] if connection cannot be established
       def connection
         connection_class = PgMultitenantSchemas.configuration.connection_class
         if connection_class.is_a?(String)
@@ -22,7 +42,15 @@ module PgMultitenantSchemas
         raise ConnectionError, "Failed to get database connection: #{e.message}"
       end
 
-      # Switches the search_path to the specified schema
+      # Switch the current PostgreSQL schema
+      #
+      # Sets the search_path to the specified schema using SET search_path.
+      #
+      # @param schema_name [String] The schema name to switch to
+      # @return [void]
+      # @raise [ArgumentError] if schema name is blank
+      # @example
+      #   PgMultitenantSchemas::SchemaSwitcher.switch_schema('tenant_123')
       def switch_schema(schema_name)
         raise ArgumentError, "Schema name cannot be empty" if schema_name.nil? || schema_name.strip.empty?
 
@@ -31,13 +59,25 @@ module PgMultitenantSchemas
         execute_sql(conn, "SET search_path TO #{quoted_schema};")
       end
 
-      # Reset to default schema
+      # Reset to the default PostgreSQL schema
+      #
+      # Sets search_path back to 'public'.
+      #
+      # @return [void]
       def reset_schema
         conn = connection
         execute_sql(conn, "SET search_path TO public;")
       end
 
-      # Create a new schema
+      # Create a new PostgreSQL schema
+      #
+      # Uses CREATE SCHEMA IF NOT EXISTS for idempotency.
+      #
+      # @param schema_name [String] The schema name to create
+      # @return [void]
+      # @raise [ArgumentError] if schema name is blank
+      # @example
+      #   PgMultitenantSchemas::SchemaSwitcher.create_schema('tenant_123')
       def create_schema(schema_name)
         raise ArgumentError, "Schema name cannot be empty" if schema_name.nil? || schema_name.strip.empty?
 
@@ -46,7 +86,16 @@ module PgMultitenantSchemas
         execute_sql(conn, "CREATE SCHEMA IF NOT EXISTS #{quoted_schema};")
       end
 
-      # Drop a schema
+      # Drop a PostgreSQL schema
+      #
+      # @param schema_name [String] The schema name to drop
+      # @param cascade [Boolean] Whether to drop dependent objects (default: true)
+      # @return [void]
+      # @raise [ArgumentError] if schema name is blank
+      # @example
+      #   PgMultitenantSchemas::SchemaSwitcher.drop_schema('old_tenant')
+      # @example With CASCADE option
+      #   PgMultitenantSchemas::SchemaSwitcher.drop_schema('old_tenant', cascade: true)
       def drop_schema(schema_name, cascade: true)
         raise ArgumentError, "Schema name cannot be empty" if schema_name.nil? || schema_name.strip.empty?
 
@@ -56,7 +105,14 @@ module PgMultitenantSchemas
         execute_sql(conn, "DROP SCHEMA IF EXISTS #{quoted_schema} #{cascade_option};")
       end
 
-      # Check if schema exists
+      # Check if a schema exists in the database
+      #
+      # @param schema_name [String] The schema name to check
+      # @return [Boolean] true if the schema exists, false otherwise
+      # @example
+      #   if PgMultitenantSchemas::SchemaSwitcher.schema_exists?('tenant_123')
+      #     # Schema exists
+      #   end
       def schema_exists?(schema_name)
         return false if schema_name.nil? || schema_name.strip.empty?
 
@@ -73,7 +129,12 @@ module PgMultitenantSchemas
         [true, "t", "true"].include?(value)
       end
 
-      # Get current schema
+      # Get the current PostgreSQL schema
+      #
+      # @return [String] The current schema name
+      # @example
+      #   PgMultitenantSchemas::SchemaSwitcher.current_schema
+      #   #=> "tenant_123"
       def current_schema
         conn = connection
         result = execute_sql(conn, "SELECT current_schema()")
@@ -81,6 +142,11 @@ module PgMultitenantSchemas
       end
 
       # List all schemas in the database
+      #
+      # @return [Array<String>] Array of schema names
+      # @example
+      #   PgMultitenantSchemas::SchemaSwitcher.list_schemas
+      #   #=> ["public", "tenant_123", "tenant_456"]
       def list_schemas
         conn = connection
         result = execute_sql(conn, <<~SQL)

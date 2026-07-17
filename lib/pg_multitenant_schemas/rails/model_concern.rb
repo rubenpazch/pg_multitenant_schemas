@@ -62,18 +62,18 @@ module PgMultitenantSchemas
 
       # Log schema operations
       def log_schema_operation(message)
-        Rails.logger.info "PgMultitenantSchemas: #{message}"
+        ::Rails.logger.info "PgMultitenantSchemas: #{message}"
       end
 
       # Handle schema operation errors
       def handle_schema_error(error, operation)
-        Rails.logger.error "PgMultitenantSchemas: Failed to #{operation} schema '#{subdomain}': #{error.message}"
+        ::Rails.logger.error "PgMultitenantSchemas: Failed to #{operation} schema '#{subdomain}': #{error.message}"
         raise error unless development_fallback_enabled?
       end
 
       # Check if development fallback is enabled
       def development_fallback_enabled?
-        PgMultitenantSchemas.configuration.development_fallback && Rails.env.development?
+        PgMultitenantSchemas.configuration.development_fallback && ::Rails.env.development?
       end
 
       class_methods do

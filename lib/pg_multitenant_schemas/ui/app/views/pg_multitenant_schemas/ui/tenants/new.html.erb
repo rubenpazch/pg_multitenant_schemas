@@ -1,0 +1,50 @@
+<%= link_to "← Back to Tenants", "/pg_multitenant_schemas/tenants", class: "btn btn-ghost btn-sm", style: "margin-bottom:1rem;display:inline-flex;" %>
+
+<div class="card" style="max-width:480px;">
+  <div class="card-header"><h2>New Tenant</h2></div>
+
+  <%= form_with model: @tenant,
+        url: "/pg_multitenant_schemas/tenants",
+        local: true,
+        style: "padding:1.25rem;display:flex;flex-direction:column;gap:1rem;" do |f| %>
+
+    <% if @tenant.errors.any? %>
+      <div class="flash alert">
+        <ul style="list-style:none;">
+          <% @tenant.errors.full_messages.each do |msg| %>
+            <li>⚠ <%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div style="display:flex;flex-direction:column;gap:.35rem;">
+      <%= f.label :subdomain, "Subdomain / Schema name", style: "font-size:.85rem;font-weight:500;" %>
+      <%= f.text_field :subdomain,
+            placeholder: "e.g. acme_corp",
+            style: "border:1px solid #d1d5db;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;",
+            required: true %>
+      <small style="color:#6b7280;font-size:.78rem;">Used as the PostgreSQL schema name. Lowercase letters, numbers, underscores only.</small>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.35rem;">
+      <%= f.label :name, "Display name", style: "font-size:.85rem;font-weight:500;" %>
+      <%= f.text_field :name,
+            placeholder: "e.g. ACME Corporation",
+            style: "border:1px solid #d1d5db;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;" %>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:.35rem;">
+      <%= f.label :status, "Status", style: "font-size:.85rem;font-weight:500;" %>
+      <%= f.select :status,
+            [["Active", "active"], ["Trial", "trial"], ["Inactive", "inactive"]],
+            { selected: "active" },
+            style: "border:1px solid #d1d5db;border-radius:6px;padding:.5rem .75rem;font-size:.9rem;" %>
+    </div>
+
+    <div style="display:flex;gap:.6rem;padding-top:.25rem;">
+      <%= f.submit "Create Tenant & Provision Schema", class: "btn btn-primary" %>
+      <%= link_to "Cancel", "/pg_multitenant_schemas/tenants", class: "btn btn-ghost" %>
+    </div>
+  <% end %>
+</div>

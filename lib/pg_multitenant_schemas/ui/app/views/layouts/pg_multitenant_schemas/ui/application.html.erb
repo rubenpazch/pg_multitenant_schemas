@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tenant Manager · PgMultitenantSchemas</title>
+  <%= csrf_meta_tags %>
+  <style>
+    <%= File.read(File.expand_path("../../../../assets/stylesheets/pg_multitenant_schemas/ui/application.css", __dir__)).html_safe %>
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🏢 Tenant Manager</h1>
+    <span>pg_multitenant_schemas</span>
+  </header>
+
+  <main>
+    <% if flash[:notice] %>
+      <div class="flash notice"><%= flash[:notice] %></div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="flash alert"><%= flash[:alert] %></div>
+    <% end %>
+
+    <%= yield %>
+  </main>
+</body>
+</html>

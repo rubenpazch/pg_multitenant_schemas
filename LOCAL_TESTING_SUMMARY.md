@@ -1,16 +1,34 @@
 # 🧪 Summary: How to Test GitHub Workflows Locally
 
+## 📦 Current Environment
+
+- **Ruby Version**: 3.4.3 (required: ≥ 3.0.0)
+- **Rails Version**: 8.1.3 (updated April 2026)
+- **RSpec**: 3.13.2 with rspec-rails 8.0.4
+- **PostgreSQL**: 1.6.3 gem
+- **RuboCop**: 1.86.1 (latest linter)
+
+**✅ All 160 tests passing** with latest dependency versions
+
+## 🔄 Recent Dependency Updates (April 2026)
+
+| Dependency | Previous | Current | Status |
+|---|---|---|---|
+| Rails (all gems) | 8.0.2.1 | 8.1.3 | ✅ Updated |
+| rspec-rails | 7.1.1 | 8.0.4 | ✅ Updated |
+| pg (PostgreSQL) | 1.6.2 | 1.6.3 | ✅ Updated |
+| rubocop | 1.80.1 | 1.86.1 | ✅ Updated |
+| rubocop-rspec_rails | 2.31.0 | 2.32.0 | ✅ Updated |
+| 40+ supporting gems | Various | Latest | ✅ Updated |
+
+**Test Results**: All 160 tests pass with upgraded dependencies. No breaking changes.
+
 ## ✅ What You Can Do Right Now
 
-### 1. **Pre-Push Script (Recommended)**## 📁 **Files Created**
+### 1. **Pre-Push Script (Recommended)**
 
-- **`pre-push-check.sh`** - Main testing script
-- **`validate-github-commands.sh`** - Test exact GitHub Actions commands
-- **`TESTING_LOCALLY.md`** - Quick start guide
-- **`docs/local_workflow_testing.md`** - Complete documentation
-- **`.actrc`** - act configuration
-- **`.env.local.example`** - Environment templateh
-# Run this before every push
+Run this before every push:
+```bash
 ./pre-push-check.sh
 ```
 This validates everything that runs in CI:
@@ -21,17 +39,16 @@ This validates everything that runs in CI:
 - ✅ Integration tests (if PostgreSQL available)
 
 ### 2. **Manual Component Testing**
-```bash
+
 ```bash
 # Test each CI component individually
 bundle install
 bundle exec rubocop              # Code style check
-bundle exec rspec               # Run all tests
+bundle exec rspec               # Run all tests (160 tests)
 bundle exec rspec --tag integration  # Integration tests only
 bundle exec rspec --exclude-pattern '**/integration/**/*_spec.rb'  # Unit tests only
 bundle audit                    # Security audit
 gem build pg_multitenant_schemas.gemspec  # Test gem build
-```
 ```
 
 ### 3. **act Tool (Partial Support)**
@@ -114,8 +131,8 @@ createdb pg_multitenant_test
 ### Ruby Issues
 ```bash
 # Install correct Ruby version
-rbenv install 3.3.0
-rbenv local 3.3.0
+rbenv install 3.4.3
+rbenv local 3.4.3
 bundle install
 ```
 

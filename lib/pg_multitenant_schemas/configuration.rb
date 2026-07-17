@@ -12,12 +12,18 @@ module PgMultitenantSchemas
     def initialize
       @tenant_model_class = "Tenant"
       @default_schema = "public"
+      # Enable development fallback with cookie support by default in development
       @development_fallback = false
+      begin
+        @development_fallback = ::Rails.env&.development? == true if defined?(::Rails)
+      rescue StandardError
+        # If Rails is not available, keep default
+      end
       @excluded_subdomains = %w[www api admin mail ftp blog support help docs staging]
       @common_tlds = %w[com org net edu gov mil int co uk ca au de fr jp cn dev test]
       @auto_create_schemas = true
       @connection_class = "ApplicationRecord"
-      @logger = defined?(Rails) && Rails.respond_to?(:logger) ? Rails.logger : nil
+      @logger = defined?(::Rails) && ::Rails.respond_to?(:logger) ? ::Rails.logger : nil
     end
 
     def tenant_model

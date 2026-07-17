@@ -12,6 +12,33 @@ module PgMultitenantSchemas
         end
       end
 
+      initializer "pg_multitenant_schemas.middleware" do |app|
+        # Add cookies middleware for API-only apps in development
+        # Needed for cookie-based schema switching between dashboard and main app
+        if ::Rails.env.development?
+          # Insert cookies middleware at the beginning
+          app.config.middleware.insert_before 0, ActionDispatch::Cookies
+          # Session store for reading cookies properly
+          app.config.middleware.insert_before 1, ActionDispatch::Session::CookieStore, 
+            key: '_pg_multitenant_session'
+          # Flash support for notices/alerts
+          app.config.middleware.insert_before 2, ActionDispatch::Flash
+        end
+      end
+
+      initializer "pg_multitenant_schemas.controller_integration" do
+        # Automatically extend ApplicationController with ControllerConcern
+        ActiveSupport.on_load(:action_controller) do
+          include PgMultitenantSchemas::Rails::ControllerConcern
+        end
+      end
+
+      initializer "pg_multitenant_schemas.ui.routes" do |app|
+        app.routes.append do
+          mount PgMultitenantSchemas::UI::Engine, at: "/pg_multitenant_schemas"
+        end
+      end
+
       # Add rake tasks
       rake_tasks do
         # Load all task files

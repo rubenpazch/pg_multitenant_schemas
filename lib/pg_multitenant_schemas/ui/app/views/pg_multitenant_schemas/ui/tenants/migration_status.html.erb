@@ -1,0 +1,45 @@
+<%= link_to "← Back to Tenants", "/pg_multitenant_schemas/tenants", class: "btn btn-ghost btn-sm", style: "margin-bottom:1rem;display:inline-flex;" %>
+
+<div class="card" style="max-width:560px;">
+  <div class="card-header">
+    <h2>Migration Status — <span class="schema-badge"><%= @tenant.subdomain %></span></h2>
+  </div>
+
+  <div style="padding:1.25rem;display:flex;flex-direction:column;gap:1rem;">
+    <% if @status[:error] %>
+      <div class="flash alert">Error: <%= @status[:error] %></div>
+    <% else %>
+      <table>
+        <tbody>
+          <tr>
+            <td style="color:#6b7280;font-size:.8rem;font-weight:600;text-transform:uppercase;">Status</td>
+            <td>
+              <% if @status[:status] == :up_to_date %>
+                <span class="badge badge-green">✓ Up to date</span>
+              <% elsif @status[:status] == :pending %>
+                <span class="badge badge-yellow">⚠ Pending</span>
+              <% else %>
+                <span class="badge badge-gray"><%= @status[:status] %></span>
+              <% end %>
+            </td>
+          </tr>
+          <tr>
+            <td style="color:#6b7280;font-size:.8rem;font-weight:600;text-transform:uppercase;">Applied</td>
+            <td><strong><%= @status[:applied_count] || 0 %></strong> migrations</td>
+          </tr>
+          <tr>
+            <td style="color:#6b7280;font-size:.8rem;font-weight:600;text-transform:uppercase;">Pending</td>
+            <td><strong><%= @status[:pending_count] || 0 %></strong> migrations</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <% if @status[:status] == :pending %>
+        <%= form_with url: "/pg_multitenant_schemas/tenants/#{@tenant.id}/migrate",
+              method: :post, local: true do |f| %>
+          <%= f.submit "▶ Run Migrations Now", class: "btn btn-green" %>
+        <% end %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

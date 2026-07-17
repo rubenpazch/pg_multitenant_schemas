@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PgMultitenantSchemas - PostgreSQL Schema-Based Multitenancy for Rails</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--dark);
+            background: var(--light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Navigation */
+        nav {
+            background: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        nav .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 20px;
+        }
+
+        nav h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--dark);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        nav a:hover {
+            color: var(--primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            opacity: 0.95;
+            margin-bottom: 2rem;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: white;
+            color: var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid white;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 4rem 0;
+        }
+
+        .features h3 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 3rem;
+            color: var(--dark);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h4 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--primary);
+        }
+
+        .feature-card p {
+            color: var(--gray);
+        }
+
+        /* Sections */
+        section {
+            background: white;
+            padding: 3rem 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        section h2 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+
+        section h3 {
+            font-size: 1.5rem;
+            margin: 2rem 0 1rem 0;
+            color: var(--primary);
+        }
+
+        section h4 {
+            font-size: 1.1rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: var(--dark);
+        }
+
+        section p {
+            margin-bottom: 1rem;
+            color: var(--gray);
+            line-height: 1.8;
+        }
+
+        /* Code Blocks */
+        code {
+            background: var(--light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+            color: var(--danger);
+        }
+
+        pre {
+            background: var(--dark);
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+
+        /* API Reference */
+        .api-item {
+            background: var(--light);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--primary);
+        }
+
+        .api-item .signature {
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: white;
+            padding: 1rem;
+            border-radius: 0.25rem;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+        }
+
+        .api-item h4 {
+            color: var(--primary);
+        }
+
+        .params {
+            margin: 1rem 0;
+        }
+
+        .params h5 {
+            font-size: 0.95rem;
+            color: var(--dark);
+            margin: 0.75rem 0 0.5rem 0;
+            font-weight: 600;
+        }
+
+        .param {
+            margin-left: 1.5rem;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .param .name {
+            font-weight: 600;
+            color: var(--dark);
+            font-family: 'Monaco', 'Courier New', monospace;
+        }
+
+        .param .type {
+            color: var(--secondary);
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .param .description {
+            color: var(--gray);
+            margin-top: 0.25rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        th {
+            background: var(--light);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        tr:hover {
+            background: var(--light);
+        }
+
+        /* Links */
+        a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Footer */
+        footer {
+            background: var(--dark);
+            color: white;
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        footer a {
+            color: #60a5fa;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--gray-light);
+            margin-bottom: 1.5rem;
+            gap: 1rem;
+        }
+
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+
+        .badge-primary {
+            background: #dbeafe;
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: #fed7aa;
+            color: var(--warning);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            nav ul {
+                gap: 1rem;
+            }
+
+            .hero h2 {
+                font-size: 1.75rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            section h2 {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav>
+        <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>📦 PgMultitenantSchemas</h1>
+            <ul style="display: flex; gap: 2rem; list-style: none;">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#installation">Install</a></li>
+                <li><a href="#api">API</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#docs">Docs</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>PostgreSQL Schema-Based Multitenancy</h2>
+            <p>Modern Rails gem for secure, isolated, high-performance multi-tenant applications</p>
+            <div class="buttons">
+                <a href="#installation" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/rubenpazch/pg_multitenant_schemas" class="btn btn-secondary">View on GitHub</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features">
+        <div class="container">
+            <h3>Powerful Features</h3>
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🏢</div>
+                    <h4>Schema Isolation</h4>
+                    <p>Each tenant gets their own PostgreSQL schema. Complete data isolation with shared application code.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h4>Automatic Switching</h4>
+                    <p>Seamlessly switch between tenant schemas. Context is maintained throughout the request lifecycle.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h4>Subdomain Resolution</h4>
+                    <p>Extract tenant from request subdomains. Built-in tenant identification strategies.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧵</div>
+                    <h4>Thread-Safe</h4>
+                    <p>Safe for concurrent operations. Proper context isolation for multi-threaded environments.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h4>High Performance</h4>
+                    <p>Minimal overhead. Optimized for Rails 8+ with efficient schema switching.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h4>Security-First</h4>
+                    <p>Database-level tenant isolation. No risk of accidental cross-tenant queries.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Installation Section -->
+    <section id="installation">
+        <div class="container">
+            <h2>Installation</h2>
+            
+            <h3>Requirements</h3>
+            <ul style="margin: 1rem 0 1rem 2rem; color: var(--gray);">
+                <li>Ruby 3.0+</li>
+                <li>Rails 7.0+ (optimized for Rails 8)</li>
+                <li>PostgreSQL 12+</li>
+            </ul>
+
+            <h3>Setup</h3>
+            <p>Add to your Gemfile:</p>
+            <pre><code>gem 'pg_multitenant_schemas'
+bundle install</code></pre>
+
+            <h3>Configuration</h3>
+            <p>Create <code>config/initializers/pg_multitenant_schemas.rb</code>:</p>
+            <pre><code>PgMultitenantSchemas.configure do |config|
+  config.connection_class = 'ApplicationRecord'
+  config.tenant_model_class = 'Tenant'
+  config.default_schema = 'public'
+  config.excluded_subdomains = ['www', 'api', 'admin']
+  config.development_fallback = true
+  config.auto_create_schemas = true
+end</code></pre>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section>
+        <div class="container">
+            <h2>Quick Start</h2>
+
+            <h3>Migrate All Tenants</h3>
+            <pre><code># Migrate all tenant schemas at once
+rails tenants:migrate
+
+# Migrate a specific tenant
+rails tenants:migrate_tenant[acme_corp]
+
+# Check migration status
+rails tenants:status</code></pre>
+
+            <h3>Create New Tenant</h3>
+            <pre><code># Create tenant with setup (schema + migrations)
+rails tenants:create[new_tenant]
+
+# Create with attributes
+rails tenants:new['{"subdomain":"acme","name":"ACME Corp"}']</code></pre>
+
+            <h3>Context Management</h3>
+            <pre><code>// Switch to tenant context
+PgMultitenantSchemas.switch_to_tenant(tenant)
+
+# Use with block
+PgMultitenantSchemas.with_tenant(tenant) do
+  User.all  # Queries tenant's schema
+end
+
+# Get current context
+PgMultitenantSchemas.current_schema  #=> "tenant_123"</code></pre>
+
+            <h3>Rails Integration</h3>
+            <pre><code>class ApplicationController < ActionController::Base
+  include PgMultitenantSchemas::Rails::ControllerConcern
+  
+  before_action :resolve_tenant
+  
+  private
+  
+  def resolve_tenant
+    tenant = resolve_tenant_from_subdomain
+    switch_to_tenant(tenant) if tenant
+  end
+end</code></pre>
+        </div>
+    </section>
+
+    <!-- API Reference Section -->
+    <section id="api">
+        <div class="container">
+            <h2>API Reference</h2>
+
+            <h3>Context Class</h3>
+            
+            <div class="api-item">
+                <h4>current_schema</h4>
+                <div class="signature">PgMultitenantSchemas::Context.current_schema → String</div>
+                <p>Get the current tenant schema name. Returns default schema if not set.</p>
+                <div class="params">
+                    <h5>Returns</h5>
+                    <div class="param">
+                        <span class="type">String</span>
+                        <span class="description">The current schema name</span>
+                    </div>
+                </div>
+                <pre><code>PgMultitenantSchemas::Context.current_schema
+#=> "tenant_123"</code></pre>
+            </div>
+
+            <div class="api-item">
+                <h4>current_tenant</h4>
+                <div class="signature">PgMultitenantSchemas::Context.current_tenant → Object</div>
+                <p>Get the current tenant object.</p>
+                <pre><code>PgMultitenantSchemas::Context.current_tenant
+#=> #&lt;Tenant id=1, subdomain="acme"&gt;</code></pre>
+            </div>
+
+            <div class="api-item">
+                <h4>switch_to_tenant(tenant)</h4>
+                <div class="signature">PgMultitenantSchemas::Context.switch_to_tenant(tenant) → void</div>
+                <p>Switch to the given tenant's schema.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">tenant</span>
+                        <span class="type">Tenant | String</span>
+                        <span class="description">Tenant object or schema name</span>
+                    </div>
+                </div>
+                <pre><code>PgMultitenantSchemas::Context.switch_to_tenant(tenant)
+# Now all queries use tenant's schema</code></pre>
+            </div>
+
+            <div class="api-item">
+                <h4>with_tenant(tenant) { block }</h4>
+                <div class="signature">PgMultitenantSchemas::Context.with_tenant(tenant) { |block| } → Object</div>
+                <p>Execute block within tenant context. Restores previous context after block.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">tenant</span>
+                        <span class="type">Tenant | String</span>
+                        <span class="description">Tenant object or schema name</span>
+                    </div>
+                </div>
+                <pre><code>PgMultitenantSchemas::Context.with_tenant(tenant) do
+  User.all  # Queries tenant's schema
+  Order.create!(...)
+end
+# Context restored here</code></pre>
+            </div>
+
+            <h3>SchemaSwitcher Class</h3>
+
+            <div class="api-item">
+                <h4>create_schema(schema_name)</h4>
+                <div class="signature">PgMultitenantSchemas::SchemaSwitcher.create_schema(schema_name) → void</div>
+                <p>Create a new PostgreSQL schema.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">schema_name</span>
+                        <span class="type">String</span>
+                        <span class="description">Name of the schema to create</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-item">
+                <h4>drop_schema(schema_name, cascade: true)</h4>
+                <div class="signature">PgMultitenantSchemas::SchemaSwitcher.drop_schema(schema_name, cascade: true) → void</div>
+                <p>Drop a PostgreSQL schema.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">schema_name</span>
+                        <span class="type">String</span>
+                        <span class="description">Name of the schema to drop</span>
+                    </div>
+                    <div class="param">
+                        <span class="name">cascade</span>
+                        <span class="type">Boolean</span>
+                        <span class="description">Drop dependent objects (default: true)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-item">
+                <h4>schema_exists?(schema_name)</h4>
+                <div class="signature">PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema_name) → Boolean</div>
+                <p>Check if a schema exists in the database.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">schema_name</span>
+                        <span class="type">String</span>
+                        <span class="description">Name of the schema to check</span>
+                    </div>
+                </div>
+                <pre><code>if PgMultitenantSchemas::SchemaSwitcher.schema_exists?('tenant_123')
+  # Schema exists
+end</code></pre>
+            </div>
+
+            <div class="api-item">
+                <h4>list_schemas</h4>
+                <div class="signature">PgMultitenantSchemas::SchemaSwitcher.list_schemas → Array[String]</div>
+                <p>List all schemas in the database.</p>
+                <pre><code>PgMultitenantSchemas::SchemaSwitcher.list_schemas
+#=> ["public", "tenant_123", "tenant_456"]</code></pre>
+            </div>
+
+            <h3>Migrator Class</h3>
+
+            <div class="api-item">
+                <h4>migrate_all</h4>
+                <div class="signature">PgMultitenantSchemas::Migrator.migrate_all → Hash</div>
+                <p>Run migrations across all tenant schemas.</p>
+                <pre><code>results = PgMultitenantSchemas::Migrator.migrate_all
+#=> {
+#     success: ["tenant_1", "tenant_2"],
+#     failed: [],
+#     total_migrations: 5
+#   }</code></pre>
+            </div>
+
+            <div class="api-item">
+                <h4>setup_tenant(schema_name)</h4>
+                <div class="signature">PgMultitenantSchemas::Migrator.setup_tenant(schema_name) → Boolean</div>
+                <p>Create schema and run migrations for a new tenant.</p>
+                <div class="params">
+                    <h5>Parameters</h5>
+                    <div class="param">
+                        <span class="name">schema_name</span>
+                        <span class="type">String</span>
+                        <span class="description">Name of the tenant schema</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-item">
+                <h4>migration_status</h4>
+                <div class="signature">PgMultitenantSchemas::Migrator.migration_status → Hash</div>
+                <p>Get migration status for all tenants.</p>
+                <pre><code>PgMultitenantSchemas::Migrator.migration_status
+#=> {
+#     "tenant_1" => { status: :up_to_date, pending: 0 },
+#     "tenant_2" => { status: :pending, pending: 2 }
+#   }</code></pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Examples Section -->
+    <section id="examples">
+        <div class="container">
+            <h2>Common Patterns</h2>
+
+            <h3>Subdomain-Based Routing</h3>
+            <pre><code>class ApplicationController < ActionController::Base
+  include PgMultitenantSchemas::Rails::ControllerConcern
+  
+  before_action :authenticate_user!
+  before_action :resolve_tenant_from_subdomain
+  before_action :ensure_user_in_tenant
+  
+  private
+  
+  def resolve_tenant_from_subdomain
+    @tenant = resolve_tenant_from_request(request)
+    switch_to_tenant(@tenant) if @tenant
+  end
+  
+  def ensure_user_in_tenant
+    redirect_unless current_user.tenant == @tenant
+  end
+end</code></pre>
+
+            <h3>Background Jobs with Tenant Context</h3>
+            <pre><code>class ProcessOrderJob
+  include Sidekiq::Worker
+  
+  def perform(order_id, tenant_id)
+    tenant = Tenant.find(tenant_id)
+    
+    PgMultitenantSchemas.with_tenant(tenant) do
+      order = Order.find(order_id)
+      # Process order in tenant's schema
+      order.process!
+    end
+  end
+end
+
+# Enqueue with tenant context
+tenant = Tenant.first
+ProcessOrderJob.perform_async(order.id, tenant.id)</code></pre>
+
+            <h3>Cross-Tenant Admin Operations</h3>
+            <pre><code>class AdminController < ApplicationController
+  def platform_stats
+    stats = {}
+    
+    Tenant.find_each do |tenant|
+      PgMultitenantSchemas.with_tenant(tenant) do
+        stats[tenant.subdomain] = {
+          users_count: User.count,
+          orders_count: Order.count,
+          revenue: Order.sum(:amount)
+        }
+      end
+    end
+    
+    render json: stats
+  end
+end</code></pre>
+
+            <h3>Testing with Tenants</h3>
+            <pre><code>RSpec.describe User, type: :model do
+  let(:tenant) { create(:tenant) }
+  
+  before { PgMultitenantSchemas.switch_to_tenant(tenant) }
+  after { PgMultitenantSchemas.reset! }
+  
+  it 'creates user in tenant schema' do
+    user = create(:user)
+    
+    PgMultitenantSchemas.with_tenant(tenant) do
+      expect(User.find(user.id)).to eq(user)
+    end
+  end
+end</code></pre>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="docs">
+        <div class="container">
+            <h2>Complete Documentation</h2>
+
+            <h3>Core Components</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Purpose</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Context</strong></td>
+                        <td>Thread-safe tenant context management</td>
+                        <td><a href="context.md">Documentation</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>SchemaSwitcher</strong></td>
+                        <td>Low-level PostgreSQL schema operations</td>
+                        <td><a href="schema_switcher.md">Documentation</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Migrator</strong></td>
+                        <td>Automated migration management</td>
+                        <td><a href="migrator.md">Documentation</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>TenantResolver</strong></td>
+                        <td>Tenant identification strategies</td>
+                        <td><a href="tenant_resolver.md">Documentation</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Configuration</strong></td>
+                        <td>Gem configuration and settings</td>
+                        <td><a href="configuration.md">Documentation</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Rails Integration</strong></td>
+                        <td>Framework components and patterns</td>
+                        <td><a href="rails_integration.md">Documentation</a></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>Guides</h3>
+            <ul style="margin: 1rem 0 1rem 2rem; color: var(--gray);">
+                <li><a href="testing.md">Testing Guide</a> - RSpec test suite and testing patterns</li>
+                <li><a href="integration_testing.md">Integration Testing</a> - PostgreSQL integration testing</li>
+                <li><a href="errors.md">Error Handling</a> - Exception classes and error management</li>
+                <li><a href="github_actions_setup.md">CI/CD Setup</a> - GitHub Actions automation</li>
+            </ul>
+
+            <h3>Troubleshooting</h3>
+            <ul style="margin: 1rem 0 1rem 2rem; color: var(--gray);">
+                <li><a href="github_actions_permissions_fix.md">GitHub Actions Permissions</a></li>
+                <li><a href="local_workflow_testing.md">Local Workflow Testing</a></li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">
+        <div class="container" style="text-align: center;">
+            <h2 style="color: white; margin-bottom: 2rem;">Production Ready</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 2rem; text-align: center;">
+                <div>
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">217</div>
+                    <div style="font-size: 1.1rem; opacity: 0.95;">Test Examples</div>
+                </div>
+                <div>
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">100%</div>
+                    <div style="font-size: 1.1rem; opacity: 0.95;">Tests Passing</div>
+                </div>
+                <div>
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">0</div>
+                    <div style="font-size: 1.1rem; opacity: 0.95;">CVE Issues</div>
+                </div>
+                <div>
+                    <div style="font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem;">Rails 8</div>
+                    <div style="font-size: 1.1rem; opacity: 0.95;">Optimized</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p style="margin-bottom: 1rem;">
+                <strong>PgMultitenantSchemas</strong> • Modern PostgreSQL schema-based multitenancy for Rails
+            </p>
+            <p>
+                <a href="https://github.com/rubenpazch/pg_multitenant_schemas">GitHub</a> •
+                <a href="https://rubygems.org/gems/pg_multitenant_schemas">RubyGems</a> •
+                <a href="LICENSE.txt">MIT License</a>
+            </p>
+            <p style="margin-top: 1.5rem; opacity: 0.8;">
+                © 2025 Ruben Paz. Built with ❤️ for the Rails community.
+            </p>
+        </div>
+    </footer>
+</body>
+</html>

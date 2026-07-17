@@ -63,7 +63,7 @@ module PgMultitenantSchemas
           tenant_model.find_by(subdomain: subdomain, status: "active")
         end
       rescue StandardError => e
-        Rails.logger.error "PgMultitenantSchemas: Error finding tenant '#{subdomain}': #{e.message}"
+        ::Rails.logger.error "PgMultitenantSchemas: Error finding tenant '#{subdomain}': #{e.message}"
         nil
       end
 
@@ -80,8 +80,8 @@ module PgMultitenantSchemas
         tenant = resolve_tenant_from_request(request)
 
         # If no tenant found and development fallback is enabled
-        if tenant.nil? && PgMultitenantSchemas.configuration.development_fallback && Rails.env.development?
-          Rails.logger.info "PgMultitenantSchemas: No tenant found, using development fallback"
+        if tenant.nil? && PgMultitenantSchemas.configuration.development_fallback && ::Rails.env.development?
+          ::Rails.logger.info "PgMultitenantSchemas: No tenant found, using development fallback"
           return nil # This will cause switch to default schema
         end
 
