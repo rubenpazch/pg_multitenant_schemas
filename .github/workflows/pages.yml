@@ -1,0 +1,79 @@
+name: Deploy Docs to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build documentation site
+        run: |
+          mkdir -p _site
+          
+          # Copy HTML documentation
+          if [ -f "docs/index.html" ]; then
+            cp docs/index.html _site/index.html
+          fi
+          
+          # Copy markdown documentation as reference
+          if [ -d "docs" ]; then
+            mkdir -p _site/docs
+            cp docs/*.md _site/docs/ 2>/dev/null || true
+          fi
+          
+          # Create a simple index with links
+          cat > _site/redirect.html <<'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=/docs/" />
+            <title>Redirecting...</title>
+          </head>
+          <body>
+            <p>Redirecting to <a href="/docs/">documentation</a>...</p>
+          </body>
+          </html>
+          EOF
+          
+          echo "✅ Documentation build complete"
+          ls -la _site/
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Deployment Summary
+        run: |
+          echo "✅ Documentation deployed!"
+          echo "📚 Site URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/"

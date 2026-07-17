@@ -1,0 +1,158 @@
+name: Deploy to RubyGems & GitHub Packages
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'lib/pg_multitenant_schemas/version.rb'
+      - 'pg_multitenant_schemas.gemspec'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      version-changed: ${{ steps.check-version-change.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get current version
+        id: get-version
+        run: |
+          VERSION=$(grep VERSION lib/pg_multitenant_schemas/version.rb | grep -oE '"[0-9.]+"' | tr -d '"')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Current version: ${VERSION}"
+
+      - name: Check if version changed
+        id: check-version-change
+        run: |
+          CURRENT_VERSION=$(grep VERSION lib/pg_multitenant_schemas/version.rb | grep -oE '"[0-9.]+"' | tr -d '"')
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous tags found, deploying version ${CURRENT_VERSION}"
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            LAST_TAG_VERSION=$(echo "$LAST_TAG" | sed 's/^v//')
+            if [ "$CURRENT_VERSION" != "$LAST_TAG_VERSION" ]; then
+              echo "Version changed: ${LAST_TAG_VERSION} -> ${CURRENT_VERSION}"
+              echo "changed=true" >> $GITHUB_OUTPUT
+            else
+              echo "Version unchanged: ${CURRENT_VERSION}"
+              echo "changed=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  publish-rubygems:
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+
+      - name: Build gem
+        run: |
+          gem build pg_multitenant_schemas.gemspec
+          ls -lh *.gem
+
+      - name: Publish to RubyGems
+        run: |
+          mkdir -p ~/.gem
+          echo ":rubygems_api_key: ${{ secrets.RUBYGEMS_API_KEY }}" > ~/.gem/credentials
+          chmod 600 ~/.gem/credentials
+          gem push pg_multitenant_schemas-${{ needs.check-version.outputs.version }}.gem
+        if: secrets.RUBYGEMS_API_KEY != ''
+
+      - name: Publish to GitHub Packages
+        run: |
+          mkdir -p ~/.gem
+          echo ":github: Bearer ${{ secrets.GITHUB_TOKEN }}" > ~/.gem/credentials
+          chmod 600 ~/.gem/credentials
+          
+          # Alternative: Use github packages registry
+          gem push pg_multitenant_schemas-${{ needs.check-version.outputs.version }}.gem \
+            --key github \
+            --host https://rubygems.pkg.github.com/${{ github.repository_owner }}
+        continue-on-error: true
+
+  create-release:
+    needs: check-version
+    if: needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Create Git Tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          
+          VERSION=${{ needs.check-version.outputs.version }}
+          TAG="v${VERSION}"
+          
+          # Only create tag if it doesn't exist
+          if ! git rev-parse "$TAG" >/dev/null 2>&1; then
+            git tag -a "$TAG" -m "Release version ${VERSION}"
+            git push origin "$TAG"
+            echo "Tag created: $TAG"
+          else
+            echo "Tag $TAG already exists"
+          fi
+
+      - name: Extract release notes
+        id: release-notes
+        run: |
+          # Extract changelog for this version
+          VERSION=${{ needs.check-version.outputs.version }}
+          
+          if [ -f "CHANGELOG.md" ]; then
+            awk "/^## \[?${VERSION//./\\.}\]?/{flag=1;next}/^## /{if(flag)exit}flag" CHANGELOG.md > release_notes.md || echo "Release $VERSION" > release_notes.md
+          elif [ -f "RELEASE_NOTES.md" ]; then
+            cp RELEASE_NOTES.md release_notes.md
+          else
+            echo "Release version $VERSION" > release_notes.md
+          fi
+          
+          cat release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.check-version.outputs.version }}
+          name: Release v${{ needs.check-version.outputs.version }}
+          body_path: release_notes.md
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  notify:
+    needs: [check-version, publish-rubygems, create-release]
+    if: needs.check-version.outputs.version-changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment Complete!"
+          echo ""
+          echo "📦 Version: v${{ needs.check-version.outputs.version }}"
+          echo "📍 RubyGems: https://rubygems.org/gems/pg_multitenant_schemas"
+          echo "🏷️  Release: https://github.com/${{ github.repository }}/releases/tag/v${{ needs.check-version.outputs.version }}"
+          echo "📚 Docs: https://github.com/${{ github.repository }}/tree/main/docs"
