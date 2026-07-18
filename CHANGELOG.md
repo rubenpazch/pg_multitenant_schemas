@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-07-17
+
+### ⬆️ **Upgrades**
+
+- **Ruby 4.0+ Required**: Migrated to require Ruby 4.0.0+ (was 3.0.0+)
+- **Modern Syntax**: Applied Ruby 4.0 anonymous block forwarding improvements
+- **Updated RuboCop**: Target Ruby version updated to 4.0
+
+### ✅ **Quality**
+
+- All 211 tests passing with Ruby 4.0.5
+- RuboCop: 0 violations
+- Simplified CI/CD: Single Ruby 4.0.5 + PostgreSQL 15 test run
+
 ## [0.3.0] - 2025-07-17
 
 ### ✨ **New Features**
