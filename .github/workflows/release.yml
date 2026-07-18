@@ -87,8 +87,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           
+      - name: Clear any existing credentials
+        if: steps.tag_check.outputs.exists == 'false'
+        run: |
+          rm -f ~/.gem/credentials
+          rm -f ~/.gem/credentials.lock
+          
       - name: Publish to RubyGems
         if: steps.tag_check.outputs.exists == 'false'
-        run: gem push pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem
+        run: |
+          gem push pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem \
+            --host https://rubygems.org
         env:
           GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
