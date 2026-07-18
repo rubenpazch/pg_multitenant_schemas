@@ -5,8 +5,8 @@ require_relative "lib/pg_multitenant_schemas/version"
 Gem::Specification.new do |spec|
   spec.name = "pg_multitenant_schemas"
   spec.version = PgMultitenantSchemas::VERSION
-  spec.authors = ["Ruben Paz"]
-  spec.email = ["rubenpazchuspe@outlook.com"]
+  spec.authors = ["L BYTE EIRL"]
+  spec.email = ["info@lbyte.io"]
 
   spec.summary = "Modern PostgreSQL schema-based multitenancy for Rails"
   spec.description = "A production-ready Ruby gem providing PostgreSQL " \
