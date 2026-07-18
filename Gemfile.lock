@@ -78,11 +78,14 @@ GEM
     nokogiri (1.19.4)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
+    nokogiri (1.19.4-x86_64-linux-gnu)
+      racc (~> 1.4)
     parallel (2.0.1)
     parser (3.3.11.1)
       ast (~> 2.4.1)
       racc
     pg (1.6.3)
+    pg (1.6.3-x86_64-linux)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -183,6 +186,7 @@ GEM
 
 PLATFORMS
   ruby
+  x86_64-linux
 
 DEPENDENCIES
   activerecord (>= 7.0, < 9.0)
