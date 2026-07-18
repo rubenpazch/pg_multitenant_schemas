@@ -45,7 +45,7 @@ RSpec.describe "CORS Configuration" do
     it "exposes necessary response headers for caching" do
       # Some headers like ETag might need to be exposed
       # for caching logic in frontend
-      exposed_headers = ["content-type", "etag"]
+      exposed_headers = %w[content-type etag]
 
       expect(exposed_headers).to include("etag")
     end
@@ -74,10 +74,9 @@ RSpec.describe "CORS Configuration" do
     it "allows dynamic origin configuration" do
       # In production, allowed_origins should be configurable
       # to match actual frontend domain
-
       allowed_origins = ["localhost:5173", "localhost:3000"]
-
       expect(allowed_origins).to respond_to(:<<)
+    end
 
     it "does not use wildcard origins" do
       # Security: should not use '*' for origins when credentials are allowed
@@ -108,7 +107,7 @@ RSpec.describe "CORS Configuration" do
       # With credentials: true, browsers send cookies
       # and servers can set cookies in CORS responses
 
-      expect(true).to be(true)
+      expect(true).to be_truthy
     end
 
     it "requires explicit origin (not wildcard) when credentials enabled" do

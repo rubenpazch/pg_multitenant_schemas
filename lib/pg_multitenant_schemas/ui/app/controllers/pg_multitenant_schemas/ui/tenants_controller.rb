@@ -122,13 +122,9 @@ module PgMultitenantSchemas
         @tenant_model_name = PgMultitenantSchemas.configuration.tenant_model_class
       end
 
-      def tenant_model
-        @tenant_model_name.constantize
-      end
+      def tenant_model = @tenant_model_name.constantize
 
-      def tenant_params
-        params.require(:tenant).permit(:subdomain, :name, :status)
-      end
+      def tenant_params = params.require(:tenant).permit(:subdomain, :name, :status)
     end
   end
 end
