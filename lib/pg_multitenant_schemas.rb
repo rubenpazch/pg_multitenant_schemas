@@ -92,8 +92,8 @@ module PgMultitenantSchemas
     # @yield Executes the given block in the tenant's schema context
     # @return [Object] The return value of the block
     # @see Context.with_tenant
-    def with_tenant(tenant_or_schema, &block)
-      Context.with_tenant(tenant_or_schema, &block)
+    def with_tenant(tenant_or_schema, &)
+      Context.with_tenant(tenant_or_schema, &)
     end
 
     # Create a new tenant schema
