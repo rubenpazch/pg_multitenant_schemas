@@ -9,7 +9,6 @@ gem "irb"
 gem "rake", "~> 13.0"
 
 gem "rspec", "~> 3.0"
-gem "rspec_junit_formatter", "~> 0.6" # JUnit XML output for CI
 gem "rspec-rails", "~> 8.0" # Latest for Rails 8+
 
 gem "activerecord", ">= 7.0", "< 9.0"
