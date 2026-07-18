@@ -6,8 +6,6 @@ RSpec.describe "Session Persistence" do
   describe "Session-based tenant switching" do
     it "stores selected schema in session" do
       session = {}
-      controller = instance_double(ActionController::API)
-      allow(controller).to receive(:session).and_return(session)
 
       # Simulate storing schema in session
       session[:pg_multitenant_selected_schema] = "pepito"
@@ -40,7 +38,6 @@ RSpec.describe "Session Persistence" do
 
   describe "Controller concern session handling" do
     it "prioritizes session over cookie" do
-      instance_double(ActionDispatch::Request)
       session = { pg_multitenant_selected_schema: "pepito" }
 
       # Session should take priority
@@ -50,7 +47,6 @@ RSpec.describe "Session Persistence" do
     end
 
     it "resolves schema from cookie when session is empty" do
-      instance_double(ActionDispatch::Request)
       session = {}
       cookie = { pg_multitenant_selected_schema: "juanita" }
 
