@@ -11,13 +11,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    name: Test Ruby ${{ matrix.ruby }}
-    strategy:
-      matrix:
-        ruby:
-          - '3.2'
-          - '3.3'
-          - '3.4'
+    name: Test Ruby 4.0.5
 
     services:
       postgres:
@@ -40,7 +34,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: ${{ matrix.ruby }}
+          ruby-version: '4.0.5'
           bundler-cache: true
           
       - name: Set up database
@@ -74,7 +68,7 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.4'
+          ruby-version: '4.0.5'
           bundler-cache: true
           
       - name: Run bundle audit
