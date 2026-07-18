@@ -45,7 +45,7 @@ jobs:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pg_multitenant_schemas_test
 
     - name: Upload coverage reports
-      if: matrix.ruby-version == '3.3' && matrix.postgres-version == '15'
+      if: always()
       uses: codecov/codecov-action@v3
       with:
         files: ./coverage/.resultset.json
@@ -55,7 +55,7 @@ jobs:
       uses: EnricoMi/publish-unit-test-result-action@v2
       with:
         files: rspec.xml
-        check_name: RSpec Results - Ruby ${{ matrix.ruby-version }}
+        check_name: RSpec Results - Ruby 4.0.5
 
   lint:
     runs-on: ubuntu-latest
@@ -63,10 +63,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up Ruby
+    - name: Set up Ruby 4.0.5
       uses: ruby/setup-ruby@v1
       with:
-        ruby-version: '3.3'
+        ruby-version: '4.0.5'
         bundler-cache: true
 
     - name: Check Ruby syntax
