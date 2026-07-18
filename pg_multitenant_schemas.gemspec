@@ -11,8 +11,8 @@ Gem::Specification.new do |spec|
   spec.summary = "Modern PostgreSQL schema-based multitenancy for Rails"
   spec.description = "A production-ready Ruby gem providing PostgreSQL " \
                      "schema-based multitenancy with automatic tenant resolution, " \
-                     "secure isolation, and high performance. Built for Rails 7+ and " \
-                     "Ruby 3.0+, with optimizations for Rails 8. Features comprehensive " \
+                     "secure isolation, and high performance. Built for Rails 8+ and " \
+                     "Ruby 4.0+, tested with latest stable versions. Features comprehensive " \
                      "test coverage (217 tests, 100% passing), complete YARD " \
                      "documentation, and interactive HTML documentation site. Perfect " \
                      "for modern SaaS applications with database-level isolation."
