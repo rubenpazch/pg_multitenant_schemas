@@ -89,10 +89,6 @@ jobs:
           
       - name: Publish to RubyGems
         if: steps.tag_check.outputs.exists == 'false'
-        run: |
-          mkdir -p ~/.gem
-          echo ":rubygems_api_key: ${{ secrets.RUBYGEMS_API_KEY }}" > ~/.gem/credentials
-          chmod 0600 ~/.gem/credentials
-          gem push pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem
+        run: gem push pg_multitenant_schemas-${{ steps.version.outputs.version }}.gem
         env:
-          RUBYGEMS_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
+          GEM_HOST_API_KEY: ${{ secrets.RUBYGEMS_API_KEY }}
