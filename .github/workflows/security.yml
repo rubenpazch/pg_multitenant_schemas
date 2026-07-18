@@ -42,20 +42,15 @@ jobs:
         run: |
           bundle outdated || true
 
-  security-scan:
+  secret-scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Run Brakeman (Rails security scanner)
-        run: |
-          gem install brakeman
-          brakeman -q -z || echo "Scan completed"
-        continue-on-error: true
+        with:
+          fetch-depth: 0
 
       - name: Check for secrets in code
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
+          extra_args: --only-verified

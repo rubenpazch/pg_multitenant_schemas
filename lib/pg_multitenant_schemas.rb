@@ -42,25 +42,23 @@ module PgMultitenantSchemas
     #
     # @return [Object, nil] The current tenant or nil if not set
     # @see Context.current_tenant
-    attr_reader :current_tenant
+    attr_accessor :current_tenant
 
     # Set the current tenant object
     #
     # @param tenant [Object] The tenant to set as current
     # @see Context.current_tenant=
-    attr_writer :current_tenant
 
     # Get the current tenant schema name
     #
     # @return [String] The current schema name
     # @see Context.current_schema
-    attr_reader :current_schema
+    attr_accessor :current_schema
 
     # Set the current tenant schema name
     #
     # @param schema [String] The schema name to set as current
     # @see Context.current_schema=
-    attr_writer :current_schema
 
     # Reset the current tenant context
     #
@@ -164,4 +162,3 @@ module PgMultitenantSchemas
     yield(configuration) if block_given?
   end
 end
-

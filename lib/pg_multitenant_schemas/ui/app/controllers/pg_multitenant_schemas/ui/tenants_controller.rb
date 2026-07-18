@@ -11,24 +11,8 @@ module PgMultitenantSchemas
 
       def index
         @tenants = tenant_model.all.order(:subdomain)
-        
-        # Load all available schemas first
-        @schemas = begin
-          PgMultitenantSchemas::SchemaSwitcher.list_schemas
-        rescue StandardError
-          []
-        end
-        
-        # Restore schema context from session or cookie, with fallback to current context
-        selected_schema = (session[:pg_multitenant_selected_schema] || cookies[:pg_multitenant_selected_schema]).to_s.strip
-        
-        if selected_schema.present? && @schemas.include?(selected_schema)
-          PgMultitenantSchemas::Context.current_schema = selected_schema
-          @current_schema = selected_schema
-        else
-          # Fallback to context's current schema
-          @current_schema = PgMultitenantSchemas::Context.current_schema
-        end
+        @schemas = load_available_schemas
+        @current_schema = resolve_selected_schema
       end
 
       def new
@@ -95,29 +79,44 @@ module PgMultitenantSchemas
 
       def switch
         schema = params[:schema].to_s.strip
-        if PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema)
-          PgMultitenantSchemas::Context.current_schema = schema
-          # Store in session (this works reliably)
-          session[:pg_multitenant_selected_schema] = schema
-          
-          # Also try to set cookie with :lax same_site (more reliable than None in localhost)
-          cookies[:pg_multitenant_selected_schema] = {
-            value: schema,
-            expires: 24.hours.from_now,
-            path: '/',
-            same_site: :lax,
-            http_only: false
-          }
-          
-          redirect_to "/pg_multitenant_schemas/tenants",
-                      notice: "Switched active context to schema '#{schema}'."
-        else
-          redirect_to "/pg_multitenant_schemas/tenants",
-                      alert: "Schema '#{schema}' does not exist."
-        end
+        return redirect_invalid_schema(schema) unless PgMultitenantSchemas::SchemaSwitcher.schema_exists?(schema)
+
+        PgMultitenantSchemas::Context.current_schema = schema
+        store_schema_in_session_and_cookies(schema)
+        redirect_to "/pg_multitenant_schemas/tenants",
+                    notice: "Switched active context to schema '#{schema}'."
       end
 
       private
+
+      def load_available_schemas
+        PgMultitenantSchemas::SchemaSwitcher.list_schemas
+      rescue StandardError
+        []
+      end
+
+      def resolve_selected_schema
+        selected = (session[:pg_multitenant_selected_schema] || cookies[:pg_multitenant_selected_schema]).to_s.strip
+        return selected if selected.present? && load_available_schemas.include?(selected)
+
+        PgMultitenantSchemas::Context.current_schema
+      end
+
+      def store_schema_in_session_and_cookies(schema)
+        session[:pg_multitenant_selected_schema] = schema
+        cookies[:pg_multitenant_selected_schema] = {
+          value: schema,
+          expires: 24.hours.from_now,
+          path: "/",
+          same_site: :lax,
+          http_only: false
+        }
+      end
+
+      def redirect_invalid_schema(schema)
+        redirect_to "/pg_multitenant_schemas/tenants",
+                    alert: "Schema '#{schema}' does not exist."
+      end
 
       def load_tenant_model
         @tenant_model_name = PgMultitenantSchemas.configuration.tenant_model_class

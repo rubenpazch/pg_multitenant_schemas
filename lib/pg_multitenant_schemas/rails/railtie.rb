@@ -19,8 +19,8 @@ module PgMultitenantSchemas
           # Insert cookies middleware at the beginning
           app.config.middleware.insert_before 0, ActionDispatch::Cookies
           # Session store for reading cookies properly
-          app.config.middleware.insert_before 1, ActionDispatch::Session::CookieStore, 
-            key: '_pg_multitenant_session'
+          app.config.middleware.insert_before 1, ActionDispatch::Session::CookieStore,
+                                              key: "_pg_multitenant_session"
           # Flash support for notices/alerts
           app.config.middleware.insert_before 2, ActionDispatch::Flash
         end

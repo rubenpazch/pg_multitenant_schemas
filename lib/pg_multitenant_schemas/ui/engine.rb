@@ -26,13 +26,13 @@ module PgMultitenantSchemas
           rescue StandardError
             # Middleware may already exist, that's fine
           end
-          
+
           begin
-            app.config.middleware.insert_before 1, ActionDispatch::Session::CookieStore, key: '_pg_multitenant_session'
+            app.config.middleware.insert_before 1, ActionDispatch::Session::CookieStore, key: "_pg_multitenant_session"
           rescue StandardError
             # Middleware may already exist, that's fine
           end
-          
+
           begin
             app.config.middleware.insert_before 2, ActionDispatch::Flash
           rescue StandardError

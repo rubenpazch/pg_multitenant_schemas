@@ -20,3 +20,7 @@ gem "bundler", "~> 2.0"
 gem "rubocop", "~> 1.86"
 gem "rubocop-rspec", "~> 3.0"
 gem "rubocop-rspec_rails", "~> 2.32"
+
+# Security: Fix CVE vulnerabilities
+gem "nokogiri", ">= 1.19.4"
+gem "rails-html-sanitizer", ">= 1.7.1"

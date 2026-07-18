@@ -8,8 +8,8 @@ RSpec.describe PgMultitenantSchemas::Configuration do
   describe "#initialize" do
     it "sets default values" do
       expect(config.connection_class).to eq("ApplicationRecord")
-      # development_fallback may be true or false depending on Rails availability
-      expect([true, false]).to include(config.development_fallback)
+      # development_fallback should be a boolean
+      expect(config.development_fallback).to be_a(TrueClass).or be_a(FalseClass)
       expect(config.auto_create_schemas).to be true
       expect(config.logger).to be_nil
     end

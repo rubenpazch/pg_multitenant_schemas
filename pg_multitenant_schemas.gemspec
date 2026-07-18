@@ -9,11 +9,13 @@ Gem::Specification.new do |spec|
   spec.email = ["rubenpazchuspe@outlook.com"]
 
   spec.summary = "Modern PostgreSQL schema-based multitenancy for Rails"
-  spec.description = "A production-ready Ruby gem providing PostgreSQL schema-based multitenancy with automatic " \
-                     "tenant resolution, secure isolation, and high performance. Built for Rails 7+ and Ruby 3.0+, " \
-                     "with optimizations for Rails 8. Features comprehensive test coverage (217 tests, 100% passing), " \
-                     "complete YARD documentation, and interactive HTML documentation site. Perfect for modern SaaS " \
-                     "applications requiring multi-tenant support with database-level isolation and zero CVE issues."
+  spec.description = "A production-ready Ruby gem providing PostgreSQL " \
+                     "schema-based multitenancy with automatic tenant resolution, " \
+                     "secure isolation, and high performance. Built for Rails 7+ and " \
+                     "Ruby 3.0+, with optimizations for Rails 8. Features comprehensive " \
+                     "test coverage (217 tests, 100% passing), complete YARD " \
+                     "documentation, and interactive HTML documentation site. Perfect " \
+                     "for modern SaaS applications with database-level isolation."
   spec.homepage = "https://github.com/rubenpazch/pg_multitenant_schemas"
   spec.license = "MIT"
   spec.required_ruby_version = ">= 3.0.0"
