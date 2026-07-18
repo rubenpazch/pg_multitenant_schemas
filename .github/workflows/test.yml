@@ -45,7 +45,7 @@ jobs:
         PGPASSWORD: postgres
 
     - name: Run RSpec tests
-      run: bundle exec rspec --format progress --format RspecJunitXml --out rspec.xml
+      run: bundle exec rspec --format progress --format RSpecJunitFormatter --out rspec.xml
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/pg_multitenant_schemas_test
 
